@@ -38,15 +38,15 @@ Context:
 If context is blank:
 Reply with "No relevant context found with the case id specified. Please try again."
 
-Your answer MUST follow if there is context and be formatted in MARKDOWN in the following example format:
+Your answer MUST d be formatted in MARKDOWN in the following example format:
 ---
-**Question:** 
-
-**Analysis:** 
-
-**Findings:** 
-
-**Source Reference:** The analysis is based on a series of specific WhatsApp messages from a conversation on dd/mm/yyyy between (phone number) and (phone number), particularly messages sent at hh:mm:ss AM, hh:mm:ss PM.
+Question:
+\n
+Analysis:
+\n
+Findings:
+\n
+Source Reference:
 ---
 
 Make sure your answer is in proper markdown format!
@@ -66,6 +66,7 @@ export async function POST(req: Request) {
   const llm = new ChatOllama({
     model: "llama3:instruct",
     callbacks: [handlers],
+    temperature: 0.3,
   });
 
   // Initialise Pinecone, PineconeStore, and OllamaEmbeddings
@@ -79,12 +80,12 @@ export async function POST(req: Request) {
     namespace: "test",
   });
 
+  const parsedCaseId = parseInt(caseId);
+
   // Similarity search based on text and caseId metadata
   const results = await vectorStore.similaritySearch(currentMessageContent, 2, {
-    caseId: parseInt(caseId),
+    caseId: isNaN(parsedCaseId) ? 0 : parsedCaseId,
   });
-
-  console.log(results);
 
   const chain = QNA_PROMPT.pipe(llm);
 

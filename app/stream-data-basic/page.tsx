@@ -1,9 +1,13 @@
 "use client";
 
+import { EnterIcon } from "@radix-ui/react-icons";
 import { useChat } from "ai/react";
 import { useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { z } from "zod";
+
+const caseIdSchema = z.coerce.number().int();
 
 export default function Chat() {
   const [caseId, setCaseId] = useState("");
@@ -26,27 +30,40 @@ export default function Chat() {
           ))
         : null}
 
-      <form onSubmit={handleSubmit}>
-        <input
-          className="fixed w-full max-w-md bottom-0 border border-gray-300 rounded mb-8 shadow-xl p-2"
-          value={input}
-          placeholder="Say something..."
-          onChange={handleInputChange}
-        />
-        <input
-          className="fixed bottom-0 left-5 min-w-5 border border-gray-300 rounded mb-8 shadow-xl p-2"
-          value={caseId}
-          placeholder="Case ID"
-          id="caseId"
-          onChange={(e) => setCaseId(e.target.value)}
-          required
-        />
-        <button
-          className="fixed bottom-0 right-5 border border-gray-300 rounded mb-8 shadow-xl p-2"
-          type="submit"
-        >
-          Submit
-        </button>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          console.log(caseId, caseIdSchema.safeParse(caseId));
+          const parsedCaseId = caseIdSchema.safeParse(caseId);
+          if (!parsedCaseId.success) {
+            alert("Case ID must be a 5 digit number");
+            setCaseId("");
+            return;
+          }
+          handleSubmit(e);
+        }}
+      >
+        <div className="fixed flex bottom-0 space-x-4 mb-8 ">
+          <div className="relative">
+            <input
+              className="w-full h-min max-w-md border pr-7 border-gray-300 rounded shadow-xl p-2"
+              value={input}
+              placeholder="Say something..."
+              onChange={handleInputChange}
+              required
+            />
+            <button type="submit" className="absolute right-2 top-[0.8rem] ">
+              <EnterIcon />
+            </button>
+          </div>
+          <input
+            className="w-[100px] border border-gray-300 rounded shadow-xl p-2"
+            value={caseId}
+            placeholder="Case ID"
+            onChange={(e) => setCaseId(e.target.value)}
+            required
+          />
+        </div>
       </form>
     </div>
   );
