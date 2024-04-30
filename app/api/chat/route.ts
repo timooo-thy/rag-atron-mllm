@@ -8,11 +8,12 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const { stream, handlers } = LangChainStream();
-
+  
   const llm = new ChatOpenAI({
     streaming: true,
+    openAIApiKey: process.env.OPENAI_API_KEY,
   });
-
+  console.log(process.env.OPENAI_API_KEY)
   llm
     .call(
       (messages as Message[]).map(m =>

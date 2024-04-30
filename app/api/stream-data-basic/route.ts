@@ -1,42 +1,30 @@
 import {
   StreamingTextResponse,
-  LangChainStream,
   Message,
-  StreamData,
 } from 'ai';
-import { ChatOpenAI } from 'langchain/chat_models/openai';
+import { ChatOllama } from "langchain/chat_models/ollama";
 import { AIMessage, HumanMessage } from 'langchain/schema';
+import { BytesOutputParser } from 'langchain/schema/output_parser';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
-
-  const data = new StreamData();
-
-  // important: use LangChainStream from the AI SDK:
-  const { stream, handlers } = LangChainStream({
-    onFinal: () => {
-      data.append(JSON.stringify({ key: 'value' })); // example
-      data.close();
-    },
+  const llm = new ChatOllama({
+    model: "llava:13b",
+    baseUrl:"http://localhost:11434",
   });
 
-  const llm = new ChatOpenAI({
-    streaming: true,
-  });
+  const parser = new BytesOutputParser();
 
-  llm
-    .call(
-      (messages as Message[]).map(m =>
-        m.role == 'user'
-          ? new HumanMessage(m.content)
-          : new AIMessage(m.content),
-      ),
-      {},
-      [handlers],
+  const stream = await llm
+  .pipe(parser)
+  .stream(
+    (messages as Message[]).map((m) =>
+      m.role == "user"
+        ? new HumanMessage(m.content)
+        : new AIMessage(m.content)
     )
-    .catch(console.error);
-
-  return new StreamingTextResponse(stream, {}, data);
+  );
+  return new StreamingTextResponse(stream);
 }
