@@ -10,6 +10,7 @@ import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retr
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { vectorStore } from "@/utils/db";
 import { QNA_PROMPT, REPHASE_PROMPT } from "@/utils/prompt-templates";
+import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 
 export const dynamic = "force-dynamic";
 
@@ -29,21 +30,31 @@ export async function POST(req: Request) {
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model: "llama3:instruct",
+    model: "llama3:70b",
     callbacks: [handlers],
     temperature: 0.3,
   });
 
   const rephrasingLLM = new ChatOllama({
-    model: "llama3:instruct",
+    model: "llama3:70b",
     temperature: 0.3,
   });
 
   // Retrieve the vector store
   const retriever = (await vectorStore()).asRetriever({
-    k: 2,
+    k: 3,
     filter: { caseId: parseInt(caseId) },
   });
+
+  // const retriever = ScoreThresholdRetriever.fromVectorStore(
+  //   await vectorStore(),
+  //   {
+  //     filter: { caseId: parseInt(caseId) },
+  //     minSimilarityScore: 0.01,
+  //     maxK: 50,
+  //     kIncrement: 2,
+  //   }
+  // );
 
   // Create history aware retriever chain
   const historyAwareRetrieverChain = await createHistoryAwareRetriever({

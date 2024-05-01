@@ -13,6 +13,7 @@ export async function POST(req: NextRequest) {
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 256,
       chunkOverlap: 20,
+      separators: ["["],
     });
 
     const splitDocuments = await splitter.createDocuments([text]);
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
     });
 
     console.log(
-      `Successfully indexed ${splitDocuments.length} documents in Pinecone`
+      `Successfully indexed ${splitDocuments.length} documents in vector db.`
     );
 
     return NextResponse.json({ ok: true }, { status: 200 });

@@ -10,8 +10,8 @@ const QNA_PROMPT = ChatPromptTemplate.fromMessages([
       "The AI tool is designed to identify, analyse, and summarise relevant unstructured data from various sources based on queries posed by you, the Intelligence Officer.\n\n" +
       "This includes assessing the data’s relevance to ongoing investigations, focusing on potential leads, and aiding in the accumulation of evidence to support law enforcement activities.\n\n" +
       "Only use the following context as data source:\n\nContext:\n{context}\n" +
-      "If context is blank: 'Reply with No relevant context found with the case id specified. Please try again.'\n\n" +
-      "Format your answer if context is not blank, in markdown format.\n---\nQuestion:\nAnalysis:\nFindings:\nSource Reference:\n---\n",
+      "If context is blank: 'Reply with No relevant context found with the Case ID specified. Please try again.'\n\n" +
+      "If contexxt is not blank, strictly follow your answer in markdown format.\n---\nQuestion:\nAnalysis:\nFindings:\nSource Reference: Indicate the message time and date of your sources will do.\n---\n",
   ],
   new MessagesPlaceholder("chat_history"),
   ["user", "{input}\n\nCase ID: {case_id}`"],

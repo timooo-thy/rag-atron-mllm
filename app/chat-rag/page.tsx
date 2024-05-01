@@ -33,7 +33,6 @@ export default function Chat() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          console.log(caseId, caseIdSchema.safeParse(caseId));
           const parsedCaseId = caseIdSchema.safeParse(caseId);
           if (!parsedCaseId.success) {
             alert("Case ID must be a 5 digit number");
