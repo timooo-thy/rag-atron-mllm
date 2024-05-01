@@ -30,36 +30,43 @@ export async function POST(req: Request) {
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model: "llama3:70b",
+    model: "llama3:instruct",
     callbacks: [handlers],
     temperature: 0.3,
   });
 
   const rephrasingLLM = new ChatOllama({
-    model: "llama3:70b",
+    model: "llama3:instruct",
     temperature: 0.3,
   });
 
   // Retrieve the vector store
-  const retriever = (await vectorStore()).asRetriever({
-    k: 3,
-    filter: { caseId: parseInt(caseId) },
-  });
-
   // const retriever = (await vectorStore()).asRetriever({
   //   k: 3,
-  //   filter: `caseId = ${parseInt(caseId)}`,
+  //   filter: { caseId: parseInt(caseId) },
   // });
 
-  // const retriever = ScoreThresholdRetriever.fromVectorStore(
-  //   await vectorStore(),
-  //   {
-  //     filter: { caseId: parseInt(caseId) },
-  //     minSimilarityScore: 0.01,
-  //     maxK: 50,
-  //     kIncrement: 2,
-  //   }
-  // );
+  const results = await (
+    await vectorStore()
+  ).similaritySearchWithScore(
+    "new stock high-quality substance effects hours duration online purchase Singapore numbers 65 81234567",
+    6,
+    {
+      caseId: parseInt(caseId),
+    }
+  );
+
+  console.log(results);
+
+  const retriever = ScoreThresholdRetriever.fromVectorStore(
+    await vectorStore(),
+    {
+      filter: { caseId: parseInt(caseId) },
+      minSimilarityScore: 0.2,
+      maxK: 10,
+      kIncrement: 1,
+    }
+  );
 
   // Create history aware retriever chain
   const historyAwareRetrieverChain = await createHistoryAwareRetriever({

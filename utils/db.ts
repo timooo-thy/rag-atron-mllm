@@ -9,7 +9,7 @@ const pinecone = new Pinecone();
 const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX!);
 
 const embeddings = new OllamaEmbeddings({
-  model: "llama3:70b",
+  model: "llama3:instruct",
 });
 
 // Creating the index from the environment variables automatically.
