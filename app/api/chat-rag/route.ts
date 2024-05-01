@@ -8,7 +8,7 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import vectorStore from "@/utils/db";
+import { vectorStore } from "@/utils/db";
 import { QNA_PROMPT, REPHASE_PROMPT } from "@/utils/prompt-templates";
 
 export const dynamic = "force-dynamic";

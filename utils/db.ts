@@ -15,4 +15,4 @@ const vectorStore = async () =>
     namespace: "test",
   });
 
-export default vectorStore;
+export { vectorStore, pineconeIndex, embeddings };

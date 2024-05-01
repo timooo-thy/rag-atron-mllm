@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
-import { Pinecone } from "@pinecone-database/pinecone";
 import { PineconeStore } from "@langchain/pinecone";
+import { embeddings, pineconeIndex } from "@/utils/db";
 
 export const dynamic = "force-dynamic";
 
@@ -11,17 +10,9 @@ export async function POST(req: NextRequest) {
   const text = body.text;
 
   try {
-    const pinecone = new Pinecone();
-
-    const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX!);
-
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 256,
       chunkOverlap: 20,
-    });
-
-    const embeddings = new OllamaEmbeddings({
-      model: "llama3",
     });
 
     const splitDocuments = await splitter.createDocuments([text]);
@@ -31,7 +22,7 @@ export async function POST(req: NextRequest) {
     }
 
     await PineconeStore.fromDocuments(splitDocuments, embeddings, {
-      pineconeIndex,
+      pineconeIndex: pineconeIndex,
       maxConcurrency: 5,
       namespace: "test",
     });
