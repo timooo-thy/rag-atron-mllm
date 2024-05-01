@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
-import { embeddings, pineconeIndex } from "@/utils/db";
+import { embeddings, pineconeIndex, vectorStore } from "@/utils/db";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +27,8 @@ export async function POST(req: NextRequest) {
       maxConcurrency: 5,
       namespace: "test",
     });
+
+    // await (await vectorStore()).addDocuments(splitDocuments);
 
     console.log(
       `Successfully indexed ${splitDocuments.length} documents in vector db.`

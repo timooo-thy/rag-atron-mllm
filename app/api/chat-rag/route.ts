@@ -46,6 +46,11 @@ export async function POST(req: Request) {
     filter: { caseId: parseInt(caseId) },
   });
 
+  // const retriever = (await vectorStore()).asRetriever({
+  //   k: 3,
+  //   filter: `caseId = ${parseInt(caseId)}`,
+  // });
+
   // const retriever = ScoreThresholdRetriever.fromVectorStore(
   //   await vectorStore(),
   //   {
