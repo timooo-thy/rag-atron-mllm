@@ -13,7 +13,7 @@ export default function Chat() {
   const [caseId, setCaseId] = useState("");
 
   const { messages, input, handleInputChange, handleSubmit } = useChat({
-    api: "/api/stream-data-basic",
+    api: "/api/chat-rag",
     body: { caseId: caseId },
   });
 
