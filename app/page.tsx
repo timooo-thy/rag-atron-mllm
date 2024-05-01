@@ -7,18 +7,20 @@ import {
   Bot,
   BotIcon,
   Code2,
+  CopyIcon,
   CornerDownLeft,
   LifeBuoy,
   Mic,
   Paperclip,
   Rabbit,
+  SendIcon,
   Settings,
   Settings2,
-  Share,
   SquareTerminal,
   SquareUser,
   Turtle,
 } from "lucide-react";
+import { Spinner } from "@nextui-org/react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -50,16 +52,24 @@ import Image from "next/image";
 import remarkGfm from "remark-gfm";
 import Markdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
-import { caseIdSchema } from "@/lib/utils";
+import { formSchema } from "@/lib/utils";
 import { toast } from "sonner";
 
 export default function Chat() {
   const [caseId, setCaseId] = useState("");
-  const { messages, input, handleInputChange, handleSubmit, setInput } =
-    useChat({
-      api: "/api/chat-rag",
-      body: { caseId: caseId },
-    });
+  const [temperature, setTemperature] = useState("");
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    setInput,
+    isLoading,
+    error,
+  } = useChat({
+    api: "/api/chat-rag",
+    body: { caseId: caseId, temperature: temperature },
+  });
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -278,7 +288,7 @@ export default function Chat() {
                       <Input
                         value={caseId}
                         id="caseid"
-                        placeholder="12345"
+                        placeholder="10932"
                         onChange={(e) => setCaseId(e.target.value)}
                       />
                     </div>
@@ -420,14 +430,20 @@ export default function Chat() {
                   </div>
                   <div className="grid gap-3">
                     <Label htmlFor="temperature">Temperature</Label>
-                    <Input id="temperature" type="number" placeholder="0.4" />
+                    <Input
+                      id="temperature"
+                      type="number"
+                      value={temperature}
+                      onChange={(e) => setTemperature(e.target.value)}
+                      placeholder="0.4"
+                    />
                   </div>
                   <div className="grid gap-3">
                     <Label htmlFor="caseid">Case ID</Label>
                     <Input
                       value={caseId}
                       id="caseid"
-                      placeholder="12345"
+                      placeholder="10932"
                       onChange={(e) => setCaseId(e.target.value)}
                     />
                   </div>
@@ -495,11 +511,6 @@ export default function Chat() {
                     <div key={m.id} className="prose">
                       {m.role === "user" ? (
                         <div className="flex items-center gap-3 h-[24px]">
-                          <BotIcon className="w-6 h-6 rounded-full p-1 ring-2 ring-black/30 dark:ring-secondary/40" />
-                          <p className="font-bold">NarcoNet AI</p>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-3 h-[24px] my-6">
                           <Image
                             src="/user.svg"
                             className="w-6 h-6 rounded-full ring-2 bg-transparent ring-black/30 dark:ring-secondary/40"
@@ -508,19 +519,55 @@ export default function Chat() {
                             alt="User"
                           />
                           <p className="font-bold">You</p>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-lg ml-auto text-slate-400/70 transition hover:text-slate-700"
+                                aria-label="Copy"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(m.content);
+                                  toast.success("Copied to clipboard!");
+                                }}
+                              >
+                                <CopyIcon className="size-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Copy</TooltipContent>
+                          </Tooltip>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-3 h-[24px]">
+                          <BotIcon className="w-6 h-6 rounded-full p-1 ring-2 ring-black/30 dark:ring-secondary/40" />
+                          <p className="font-bold">NarcoNet AI</p>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="rounded-lg ml-auto text-slate-400/70 transition hover:text-slate-700"
+                                aria-label="Copy"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(m.content);
+                                  toast.success("Copied to clipboard!");
+                                }}
+                              >
+                                <CopyIcon className="size-5" />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent side="top">Copy</TooltipContent>
+                          </Tooltip>
                         </div>
                       )}
-                      <Markdown
-                        remarkPlugins={[remarkGfm]}
-                        className="text-primary"
-                      >
+                      <Markdown remarkPlugins={[remarkGfm]} className="mb-10">
                         {m.content}
                       </Markdown>
                     </div>
                   ))
                 ) : (
                   <div className="flex justify-center items-center h-full font-semibold">
-                    <p>Upload a conversation and get started!</p>
+                    <p>Upload a conversation first!</p>
                   </div>
                 )}
                 <div ref={endOfMessagesRef} />
@@ -530,16 +577,13 @@ export default function Chat() {
                 x-chunk="dashboard-03-chunk-1"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!caseId) {
-                    toast.warning("Case ID is required.");
-                    return;
-                  }
 
-                  const parsedCaseId = caseIdSchema.safeParse(caseId);
-
-                  if (!parsedCaseId.success) {
-                    toast.warning("Case ID must be a 5 digit number");
-                    setCaseId("");
+                  const result = formSchema.safeParse({
+                    caseId,
+                    temperature,
+                  });
+                  if (!result.success) {
+                    toast.warning(result.error.errors[0].message);
                     return;
                   }
                   handleSubmit(e);
@@ -577,10 +621,20 @@ export default function Chat() {
                   <Button
                     type="submit"
                     size="sm"
-                    className="bg-primary hover:opacity-80 hover:bg-primary ml-auto gap-1.5"
+                    className={`ml-auto gap-1.5 w-[130px] bg-primary hover:opacity-80 hover:bg-primary ${
+                      input === "" || isLoading
+                        ? "cursor-not-allowed bg-primary/40 transition hover:bg-primary/40 hover:opacity-100"
+                        : ""
+                    }`}
                   >
-                    Send Message
-                    <CornerDownLeft className="size-3.5" />
+                    {isLoading ? (
+                      <Spinner size="sm" />
+                    ) : (
+                      <>
+                        <p>Send Message</p>
+                        <SendIcon className="size-3.5" />
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>

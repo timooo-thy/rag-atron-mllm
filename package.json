@@ -11,6 +11,8 @@
   "dependencies": {
     "@langchain/community": "^0.0.53",
     "@langchain/pinecone": "^0.0.4",
+    "@nextui-org/react": "^2.3.6",
+    "@nextui-org/spinner": "^2.0.28",
     "@pinecone-database/pinecone": "^2.2.0",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
@@ -27,6 +29,7 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.5",
+    "framer-motion": "^11.1.7",
     "install": "^0.13.0",
     "langchain": "^0.1.36",
     "langsmith": "^0.1.22",

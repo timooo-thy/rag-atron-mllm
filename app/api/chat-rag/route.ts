@@ -21,7 +21,7 @@ const formatMessage = (message: VercelChatMessage) => {
 };
 
 export async function POST(req: Request) {
-  const { messages, caseId } = await req.json();
+  const { messages, caseId, temperature } = await req.json();
 
   const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
   const currentMessageContent = messages[messages.length - 1].content;
@@ -32,12 +32,12 @@ export async function POST(req: Request) {
   const llm = new ChatOllama({
     model: "llama3:instruct",
     callbacks: [handlers],
-    temperature: 0.3,
+    temperature: parseFloat(temperature),
   });
 
   const rephrasingLLM = new ChatOllama({
     model: "llama3:instruct",
-    temperature: 0.3,
+    temperature: parseFloat(temperature),
   });
 
   // Retrieve the vector store
