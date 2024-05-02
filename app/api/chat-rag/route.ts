@@ -39,9 +39,7 @@ export async function POST(req: Request) {
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
   const currentMessageContent = messages[messages.length - 1].content;
-  console.log(latestKBufferWindow);
-  console.log(similarity);
-  console.log(context);
+
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
 

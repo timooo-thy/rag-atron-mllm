@@ -8,6 +8,7 @@ import {
   BotIcon,
   Code2,
   CopyIcon,
+  FileTextIcon,
   LifeBuoy,
   Mic,
   Paperclip,
@@ -50,9 +51,17 @@ import { Slider } from "@/components/ui/slider";
 import Image from "next/image";
 import remarkGfm from "remark-gfm";
 import Markdown from "react-markdown";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { formSchema } from "@/lib/utils";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function Chat() {
   const [caseId, setCaseId] = useState("");
@@ -76,6 +85,42 @@ export default function Chat() {
     },
   });
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileInputClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.type === "text/plain" || file.name.endsWith(".txt")) {
+        // Read the file content as text
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const text = e.target?.result;
+
+          try {
+            const response = await fetch("/api/ingest", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ text }),
+            });
+            if (response.ok) {
+              toast.success("Upload successful!");
+            } else {
+              toast.error("Failed to upload file. Please try again.");
+            }
+          } catch (error) {
+            toast.error("Failed to upload file. Please try again.");
+          }
+        };
+        reader.readAsText(file);
+      }
+    }
+  };
 
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -625,24 +670,51 @@ export default function Chat() {
                   className="min-h-12 resize-none border-0 p-3 shadow-none focus-visible:ring-0"
                 />
                 <div className="flex items-center p-3 pt-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <Paperclip className="size-4" />
-                        <span className="sr-only">Attach file</span>
+                  <DropdownMenu>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <Paperclip className="size-4" />
+                            <span className="sr-only">Upload file</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Upload File</TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuContent>
+                      <DropdownMenuLabel>Upload File(s)</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <Button
+                        className="bg-transparent flex justify-between gap-x-1 text-black hover:bg-gray-100 w-full"
+                        onClick={handleFileInputClick}
+                      >
+                        <span>Text/Image</span>
+
+                        <FileTextIcon className="h-5 w-5" />
+
+                        <Input
+                          type="file"
+                          accept="text/plain, .txt, image/*"
+                          name="fileInput"
+                          onChange={handleFileChange}
+                          className="hidden"
+                          ref={fileInputRef}
+                        />
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent side="top">Attach File</TooltipContent>
-                  </Tooltip>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Button variant="ghost" size="icon">
+                      <Button variant="ghost" size="icon" disabled>
                         <Mic className="size-4" />
                         <span className="sr-only">Use Microphone</span>
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top">Use Microphone</TooltipContent>
                   </Tooltip>
+
                   <Button
                     type="submit"
                     size="sm"
@@ -669,8 +741,4 @@ export default function Chat() {
       </div>
     </TooltipProvider>
   );
-}
-
-function hi() {
-  <div className="mx-auto w-full max-w-md py-24 flex flex-col stretch"></div>;
 }
