@@ -20,31 +20,47 @@ const formatMessage = (message: VercelChatMessage) => {
     : new AIMessage(message.content);
 };
 
+type Request = {
+  json: () => Promise<{
+    messages: VercelChatMessage[];
+    caseId: string;
+    temperature: number;
+    similarity: number;
+    context: number;
+  }>;
+};
+
 export async function POST(req: Request) {
-  const { messages, caseId, temperature } = await req.json();
+  const { messages, caseId, temperature, similarity, context } =
+    await req.json();
 
   const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
+  // Get the latest k buffer window (memory)
+  const latestKBufferWindow =
+    context === 0 ? [] : formattedPreviousMessages.slice(-context);
   const currentMessageContent = messages[messages.length - 1].content;
-
+  console.log(latestKBufferWindow);
+  console.log(similarity);
+  console.log(context);
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model: "llama3:instruct",
+    model: "llama3:70b-instruct",
     callbacks: [handlers],
-    temperature: parseFloat(temperature),
+    temperature: temperature,
   });
 
   const rephrasingLLM = new ChatOllama({
-    model: "llama3:instruct",
-    temperature: parseFloat(temperature),
+    model: "llama3:70b-instruct",
+    temperature: temperature,
   });
 
   // Retrieve the vector store
-  // const retriever = (await vectorStore()).asRetriever({
-  //   k: 3,
-  //   filter: { caseId: parseInt(caseId) },
-  // });
+  const retriever = (await vectorStore()).asRetriever({
+    k: similarity,
+    filter: { caseId: parseInt(caseId) },
+  });
 
   // const results = await (
   //   await vectorStore()
@@ -58,15 +74,15 @@ export async function POST(req: Request) {
 
   // console.log(results);
 
-  const retriever = ScoreThresholdRetriever.fromVectorStore(
-    await vectorStore(),
-    {
-      filter: { caseId: parseInt(caseId) },
-      minSimilarityScore: 0.2,
-      maxK: 10,
-      kIncrement: 1,
-    }
-  );
+  // const retriever = ScoreThresholdRetriever.fromVectorStore(
+  //   await vectorStore(),
+  //   {
+  //     filter: { caseId: parseInt(caseId) },
+  //     minSimilarityScore: 0.2,
+  //     maxK: 10,
+  //     kIncrement: 1,
+  //   }
+  // );
 
   // Create history aware retriever chain
   const historyAwareRetrieverChain = await createHistoryAwareRetriever({
@@ -89,7 +105,7 @@ export async function POST(req: Request) {
 
   // Invoke the chain and stream response back
   retrieverChain.invoke({
-    chat_history: formattedPreviousMessages,
+    chat_history: latestKBufferWindow,
     input: currentMessageContent,
     case_id: caseId,
   });

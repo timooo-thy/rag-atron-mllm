@@ -8,7 +8,6 @@ import {
   BotIcon,
   Code2,
   CopyIcon,
-  CornerDownLeft,
   LifeBuoy,
   Mic,
   Paperclip,
@@ -57,7 +56,9 @@ import { toast } from "sonner";
 
 export default function Chat() {
   const [caseId, setCaseId] = useState("");
-  const [temperature, setTemperature] = useState("");
+  const [temperature, setTemperature] = useState<number | undefined>(undefined);
+  const [context, setContext] = useState(6);
+  const [similarity, setSimilarity] = useState(4);
   const {
     messages,
     input,
@@ -65,10 +66,14 @@ export default function Chat() {
     handleSubmit,
     setInput,
     isLoading,
-    error,
   } = useChat({
     api: "/api/chat-rag",
-    body: { caseId: caseId, temperature: temperature },
+    body: {
+      caseId: caseId,
+      temperature: temperature,
+      similarity: similarity,
+      context: context,
+    },
   });
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
 
@@ -297,13 +302,19 @@ export default function Chat() {
                       <Slider
                         defaultValue={[4]}
                         max={10}
-                        step={1}
+                        value={[similarity]}
+                        onValueChange={(e) => setSimilarity(e[0])}
                         className="text-primary"
                       />
                     </div>
                     <div className="grid gap-3">
                       <Label htmlFor="k-memory">K-Context Window</Label>
-                      <Slider defaultValue={[2]} max={10} step={1} />
+                      <Slider
+                        value={[context]}
+                        onValueChange={(e) => setContext(e[0])}
+                        max={10}
+                        step={1}
+                      />
                     </div>
                   </fieldset>
                   <fieldset className="grid gap-6 rounded-lg border p-4">
@@ -434,7 +445,9 @@ export default function Chat() {
                       id="temperature"
                       type="number"
                       value={temperature}
-                      onChange={(e) => setTemperature(e.target.value)}
+                      onChange={(e) =>
+                        setTemperature(parseFloat(e.target.value))
+                      }
                       placeholder="0.4"
                     />
                   </div>
@@ -450,7 +463,8 @@ export default function Chat() {
                   <div className="grid gap-3">
                     <Label htmlFor="k-retrieval">K-Similarity</Label>
                     <Slider
-                      defaultValue={[4]}
+                      value={[similarity]}
+                      onValueChange={(e) => setSimilarity(e[0])}
                       max={10}
                       step={1}
                       className="text-primary"
@@ -458,7 +472,12 @@ export default function Chat() {
                   </div>
                   <div className="grid gap-3">
                     <Label htmlFor="k-memory">K-Context Window</Label>
-                    <Slider defaultValue={[2]} max={10} step={1} />
+                    <Slider
+                      max={10}
+                      step={1}
+                      value={[context]}
+                      onValueChange={(e) => setContext(e[0])}
+                    />
                   </div>
                 </fieldset>
                 <fieldset className="grid gap-6 rounded-lg border p-4">
@@ -584,7 +603,10 @@ export default function Chat() {
                   const result = formSchema.safeParse({
                     caseId,
                     temperature,
+                    similarity,
+                    context,
                   });
+
                   if (!result.success) {
                     toast.warning(result.error.errors[0].message);
                     return;

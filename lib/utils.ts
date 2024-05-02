@@ -11,9 +11,10 @@ export const formSchema = z.object({
     .number()
     .positive("Case ID is empty")
     .int("Case ID is invalid"),
-  temperature: z.coerce
-    .number()
-    .positive("Temperature value is empty")
-    .min(0)
+  temperature: z
+    .number({ message: "Temperature must be a number from 0 to 1" })
+    .min(0, "Temperature must be a number from 0 to 1")
     .max(1, "Temperature must be a number from 0 to 1"),
+  similarity: z.number().int().min(0).max(10),
+  context: z.number().int().min(0).max(10),
 });

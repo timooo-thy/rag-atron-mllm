@@ -20,7 +20,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <NextUIProvider>
           {children}
-          <Toaster richColors position="top-right" />
+          <Toaster richColors position="bottom-left" />
         </NextUIProvider>
       </body>
     </html>
