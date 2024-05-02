@@ -232,10 +232,10 @@ export default function Chat() {
                               <Rabbit className="size-5" />
                               <div className="grid gap-0.5">
                                 <p>
-                                  Llama3:{" "}
                                   <span className="font-medium text-foreground">
-                                    8b-Instruct
-                                  </span>
+                                    Llama3:
+                                  </span>{" "}
+                                  8b-Instruct
                                 </p>
                                 <p className="text-xs" data-description>
                                   Our fastest model for general use cases.
@@ -248,10 +248,10 @@ export default function Chat() {
                               <Bird className="size-5" />
                               <div className="grid gap-0.5">
                                 <p>
-                                  LLama3:{" "}
                                   <span className="font-medium text-foreground">
-                                    70b
-                                  </span>
+                                    LLama3:
+                                  </span>{" "}
+                                  70b-Instruct
                                 </p>
                                 <p className="text-xs" data-description>
                                   The most powerful model for complex
@@ -265,10 +265,10 @@ export default function Chat() {
                               <Turtle className="size-5" />
                               <div className="grid gap-0.5">
                                 <p>
-                                  Mixtral:{" "}
                                   <span className="font-medium text-foreground">
-                                    8x22b-Instruct
-                                  </span>
+                                    Mixtral:
+                                  </span>{" "}
+                                  8x22b-Instruct
                                 </p>
                                 <p className="text-xs" data-description>
                                   A balanced between both speed and performance.
@@ -504,11 +504,11 @@ export default function Chat() {
                 </fieldset>
               </form>
             </div>
-            <div className="relative flex h-full min-h-[50dvh] max-h-[90dvh] flex-col rounded-xl bg-muted/50 p-4 lg:col-span-2 border-2 ">
-              <div className="flex-1 overflow-y-auto p-4">
+            <div className="relative flex h-full min-h-[50dvh] max-h-[90dvh] flex-col rounded-xl bg-muted/50 p- lg:col-span-2 border-2 ">
+              <div className="flex flex-col overflow-y-auto md:px-4 md:pt-8 pt-4 px-2 pb-0 w-full h-full">
                 {messages.length > 0 ? (
                   messages.map((m) => (
-                    <div key={m.id} className="prose">
+                    <div key={m.id} className="prose !max-w-full px-4">
                       {m.role === "user" ? (
                         <div className="flex items-center gap-3 h-[24px]">
                           <Image
@@ -560,7 +560,10 @@ export default function Chat() {
                           </Tooltip>
                         </div>
                       )}
-                      <Markdown remarkPlugins={[remarkGfm]} className="mb-10">
+                      <Markdown
+                        remarkPlugins={[remarkGfm]}
+                        className="mb-10 rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
+                      >
                         {m.content}
                       </Markdown>
                     </div>

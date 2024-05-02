@@ -46,17 +46,17 @@ export async function POST(req: Request) {
   //   filter: { caseId: parseInt(caseId) },
   // });
 
-  const results = await (
-    await vectorStore()
-  ).similaritySearchWithScore(
-    "new stock high-quality substance effects hours duration online purchase Singapore numbers 65 81234567",
-    6,
-    {
-      caseId: parseInt(caseId),
-    }
-  );
+  // const results = await (
+  //   await vectorStore()
+  // ).similaritySearchWithScore(
+  //   "new stock high-quality substance effects hours duration online purchase Singapore numbers 65 81234567",
+  //   6,
+  //   {
+  //     caseId: parseInt(caseId),
+  //   }
+  // );
 
-  console.log(results);
+  // console.log(results);
 
   const retriever = ScoreThresholdRetriever.fromVectorStore(
     await vectorStore(),

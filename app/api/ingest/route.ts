@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
-import { embeddings, pineconeIndex, vectorStore } from "@/utils/db";
+import { embeddings, pineconeIndex } from "@/utils/db";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
     const splitDocuments = await splitter.createDocuments([text]);
 
     for (var doc of splitDocuments) {
-      doc.metadata["caseId"] = 10932;
+      doc.metadata["caseId"] = 12345;
     }
 
     await PineconeStore.fromDocuments(splitDocuments, embeddings, {
@@ -27,8 +27,6 @@ export async function POST(req: NextRequest) {
       maxConcurrency: 5,
       namespace: "test",
     });
-
-    // await (await vectorStore()).addDocuments(splitDocuments);
 
     console.log(
       `Successfully indexed ${splitDocuments.length} documents in vector db.`
