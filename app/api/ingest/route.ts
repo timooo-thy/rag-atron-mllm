@@ -8,6 +8,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const text = body.text;
+  const modelName = body.modelName;
 
   try {
     const splitter = new RecursiveCharacterTextSplitter({
@@ -23,13 +24,13 @@ export async function POST(req: NextRequest) {
     }
 
     const { embeddings, pineconeIndex } = await initialiseVectorStore(
-      "llama3:instruct"
+      modelName
     );
 
     await PineconeStore.fromDocuments(splitDocuments, embeddings, {
       pineconeIndex: pineconeIndex,
       maxConcurrency: 5,
-      namespace: "test",
+      namespace: "text",
     });
 
     console.log(

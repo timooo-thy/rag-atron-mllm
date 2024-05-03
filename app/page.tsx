@@ -2,7 +2,6 @@
 
 import { useChat } from "ai/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { useState } from "react";
 import { formSchema } from "@/lib/utils";
 import { toast } from "sonner";
 import SideNav from "@/components/side-nav";
@@ -15,21 +14,12 @@ import UploadFilesButton from "@/components/upload-files-button";
 import MicrophoneButton from "@/components/microphone-button";
 import SendMessageButton from "@/components/send-message-button";
 import TextContainer from "@/components/text-container";
-import { Model } from "@/lib/type";
 import { usePlaygroundSettings } from "@/lib/hooks";
 
 export default function Chat() {
-  const {
-    caseId,
-    setCaseId,
-    similarity,
-    setSimilarity,
-    context,
-    setContext,
-    temperature,
-    setTemperature,
-  } = usePlaygroundSettings();
-  const [modelName, setModelName] = useState<Model | null>(null);
+  const { caseId, similarity, context, temperature, modelName } =
+    usePlaygroundSettings();
+
   const {
     messages,
     input,

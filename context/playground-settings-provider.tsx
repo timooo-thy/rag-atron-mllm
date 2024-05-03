@@ -1,5 +1,6 @@
 "use client";
 
+import { Model } from "@/lib/type";
 import { createContext, useState } from "react";
 
 type PlaygroundSettingsContextType = {
@@ -11,6 +12,8 @@ type PlaygroundSettingsContextType = {
   setContext: React.Dispatch<React.SetStateAction<number>>;
   similarity: number;
   setSimilarity: React.Dispatch<React.SetStateAction<number>>;
+  modelName: Model | null;
+  setModelName: React.Dispatch<React.SetStateAction<Model | null>>;
 };
 
 export const PlaygroundSettingsContext =
@@ -26,6 +29,7 @@ export default function PlaygroundSettingsProvider({
   const [temperature, setTemperature] = useState<number | undefined>(undefined);
   const [context, setContext] = useState(6);
   const [similarity, setSimilarity] = useState(4);
+  const [modelName, setModelName] = useState<Model | null>(null);
 
   return (
     <PlaygroundSettingsContext.Provider
@@ -38,6 +42,8 @@ export default function PlaygroundSettingsProvider({
         setContext,
         similarity,
         setSimilarity,
+        modelName,
+        setModelName,
       }}
     >
       {children}

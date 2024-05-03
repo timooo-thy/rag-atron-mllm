@@ -11,6 +11,7 @@ import { Bird, Rabbit, Turtle } from "lucide-react";
 import { Slider } from "./ui/slider";
 import { Input } from "./ui/input";
 import { usePlaygroundSettings } from "@/lib/hooks";
+import { Model } from "@/lib/type";
 
 export default function Settings() {
   const {
@@ -22,6 +23,7 @@ export default function Settings() {
     setContext,
     temperature,
     setTemperature,
+    setModelName,
   } = usePlaygroundSettings();
 
   return (
@@ -29,7 +31,11 @@ export default function Settings() {
       <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
       <div className="grid gap-3">
         <Label htmlFor="model">Model</Label>
-        <Select>
+        <Select
+          onValueChange={(value) => {
+            setModelName(value as Model);
+          }}
+        >
           <SelectTrigger
             id="model"
             className="items-start [&_[data-description]]:hidden"
@@ -37,7 +43,7 @@ export default function Settings() {
             <SelectValue placeholder="Select a model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="genesis">
+            <SelectItem value="llama3:instruct">
               <div className="flex items-start gap-3 text-muted-foreground">
                 <Rabbit className="size-5" />
                 <div className="grid gap-0.5">
@@ -51,7 +57,7 @@ export default function Settings() {
                 </div>
               </div>
             </SelectItem>
-            <SelectItem value="explorer">
+            <SelectItem value="llama3:70b-instruct">
               <div className="flex items-start gap-3 text-muted-foreground">
                 <Bird className="size-5" />
                 <div className="grid gap-0.5">
@@ -65,18 +71,16 @@ export default function Settings() {
                 </div>
               </div>
             </SelectItem>
-            <SelectItem value="quantum">
+            <SelectItem value="llava:13b">
               <div className="flex items-start gap-3 text-muted-foreground">
                 <Turtle className="size-5" />
                 <div className="grid gap-0.5">
                   <p>
-                    <span className="font-medium text-foreground">
-                      Mixtral:
-                    </span>{" "}
-                    8x22b-Instruct
+                    <span className="font-medium text-foreground">LLaVa:</span>{" "}
+                    13b
                   </p>
                   <p className="text-xs" data-description>
-                    A balanced between both speed and performance.
+                    A multimodal LLM for complex tasks.
                   </p>
                 </div>
               </div>

@@ -11,6 +11,7 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages";
 import { QNA_PROMPT, REPHASE_PROMPT } from "@/utils/prompt-templates";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
+import { Model } from "@/lib/type";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +28,12 @@ type Request = {
     temperature: number;
     similarity: number;
     context: number;
+    modelName: Model;
   }>;
 };
 
 export async function POST(req: Request) {
-  const { messages, caseId, temperature, similarity, context } =
+  const { messages, caseId, temperature, similarity, context, modelName } =
     await req.json();
 
   const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
@@ -55,7 +57,7 @@ export async function POST(req: Request) {
   });
 
   // Retrieve the vector store
-  const { vectorStore } = await initialiseVectorStore("llama3:instruct");
+  const { vectorStore } = await initialiseVectorStore(modelName);
 
   const retriever = vectorStore.asRetriever({
     k: similarity,

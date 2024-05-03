@@ -1,8 +1,11 @@
 import { ChangeEvent } from "react";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
+import { usePlaygroundSettings } from "@/lib/hooks";
 
 export default function EmbedFilesButton() {
+  const { modelName } = usePlaygroundSettings();
+
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -17,7 +20,7 @@ export default function EmbedFilesButton() {
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ text }),
+              body: JSON.stringify({ text, modelName }),
             });
             if (response.ok) {
               toast.success("Upload successful!");
