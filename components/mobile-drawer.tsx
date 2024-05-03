@@ -41,7 +41,7 @@ export default function MobileDrawer({ setInput }: MobileDrawerProps) {
   } = usePlaygroundSettings();
 
   return (
-    <header className="sticky top-0 z-10 flex h-[53px] items-center gap-1 border-b px-4">
+    <header className="sticky top-0 z-10 flex h-[53px] items-center gap-1 border-b px-4  backdrop-blur-sm">
       <h1 className="text-xl font-semibold">NarcoNet AI</h1>
       <Drawer>
         <DrawerTrigger asChild>
@@ -150,6 +150,7 @@ export default function MobileDrawer({ setInput }: MobileDrawerProps) {
                 <Label htmlFor="k-retrieval">K-Similarity</Label>
                 <Slider
                   defaultValue={[4]}
+                  min={1}
                   max={10}
                   value={[similarity]}
                   onValueChange={(e) => setSimilarity(e[0])}

@@ -45,6 +45,7 @@ export default function Chat() {
       temperature,
       similarity,
       context,
+      modelName,
     });
 
     if (!result.success) {

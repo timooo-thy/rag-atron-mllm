@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
 
     const splitDocuments = await splitter.createDocuments([text]);
 
+    //TODO: Add caseId to metadata
     for (var doc of splitDocuments) {
       doc.metadata["caseId"] = 12345;
     }

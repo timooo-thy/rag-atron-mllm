@@ -112,6 +112,7 @@ export default function Settings() {
         <Slider
           value={[similarity]}
           onValueChange={(e) => setSimilarity(e[0])}
+          min={1}
           max={10}
           step={1}
           className="text-primary"

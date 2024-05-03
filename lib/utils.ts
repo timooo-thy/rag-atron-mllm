@@ -15,7 +15,9 @@ export const formSchema = z.object({
     .number({ message: "Temperature must be a number from 0 to 1" })
     .min(0, "Temperature must be a number from 0 to 1")
     .max(1, "Temperature must be a number from 0 to 1"),
-  similarity: z.number().int().min(0).max(10),
+  similarity: z.number().int().min(1).max(10),
   context: z.number().int().min(0).max(10),
-  modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"]),
+  modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
+    message: "Please select a model.",
+  }),
 });

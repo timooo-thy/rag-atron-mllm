@@ -13,7 +13,7 @@ const initialiseVectorStore = async (modelName: Model) => {
   const pineconeIndex = pinecone.Index(
     modelName == "llama3:instruct"
       ? process.env.PINECONE_INDEX_LLAMA!
-      : process.env.PINECONE_INDEX_70B!
+      : process.env.PINECONE_INDEX_LLAMA_70B!
   );
 
   const embeddings = new OllamaEmbeddings({

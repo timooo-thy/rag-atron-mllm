@@ -74,7 +74,7 @@ export default function EmbedFilesButton() {
           e.preventDefault();
           await handleFileUpload();
         }}
-        disabled={!file}
+        disabled={!file || isLoading}
       >
         {isLoading ? <Spinner color="white" size="sm" /> : "Embed"}
       </Button>

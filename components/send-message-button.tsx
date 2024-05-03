@@ -23,7 +23,7 @@ export default function SendMessageButton({
       }`}
     >
       {isLoading ? (
-        <Spinner size="sm" />
+        <Spinner size="sm" color="white" />
       ) : (
         <>
           <p>Send Message</p>
