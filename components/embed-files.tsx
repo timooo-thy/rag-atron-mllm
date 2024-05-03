@@ -82,7 +82,7 @@ export default function EmbedFiles() {
         <Label htmlFor="caseId">Case ID (For embedding purposes)</Label>
         <Input
           id="caseId"
-          placeholder="31415"
+          placeholder="12345"
           value={caseEmbedId}
           onChange={(e) => setCaseEmbedId(e.target.value)}
         />
