@@ -4,6 +4,7 @@ import {
   Message as VercelChatMessage,
 } from "ai";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
@@ -46,18 +47,26 @@ export async function POST(req: Request) {
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model: "llama3:instruct",
+    model: modelName,
     callbacks: [handlers],
     temperature: temperature,
   });
 
   const rephrasingLLM = new ChatOllama({
-    model: "llama3:instruct",
+    model: modelName,
     temperature: temperature,
   });
 
   // Retrieve the vector store
-  const { vectorStore } = await initialiseVectorStore(modelName);
+  const { embeddings } = await initialiseVectorStore(modelName);
+
+  const vectorStore = await Chroma.fromExistingCollection(embeddings, {
+    collectionName:
+      "text" + modelName === "llama3:instruct"
+        ? "llama3-instruct"
+        : "llama3-70b",
+    url: process.env.CHROMA_DB_URL!,
+  });
 
   const retriever = vectorStore.asRetriever({
     k: similarity,

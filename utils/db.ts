@@ -1,8 +1,6 @@
 import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
 import { PineconeStore } from "@langchain/pinecone";
 import { Pinecone } from "@pinecone-database/pinecone";
-import { UpstashVectorStore } from "@langchain/community/vectorstores/upstash";
-import { Index } from "@upstash/vector";
 import { Model } from "@/lib/type";
 
 const initialiseVectorStore = async (modelName: Model) => {
@@ -19,14 +17,6 @@ const initialiseVectorStore = async (modelName: Model) => {
   const embeddings = new OllamaEmbeddings({
     model: modelName,
   });
-
-  // Creating the index from the environment variables automatically.
-  // const indexFromEnv = new Index();
-
-  // const vectorStore = async () =>
-  //   new UpstashVectorStore(embeddings, {
-  //     index: indexFromEnv,
-  //   });
 
   const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
     pineconeIndex,

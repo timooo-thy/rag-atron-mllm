@@ -108,7 +108,7 @@ export default function Settings() {
         />
       </div>
       <div className="grid gap-3">
-        <Label htmlFor="k-retrieval">K-Similarity (1-10)</Label>
+        <Label>K-Similarity (1-10)</Label>
         <Slider
           value={[similarity]}
           onValueChange={(e) => setSimilarity(e[0])}
@@ -119,7 +119,7 @@ export default function Settings() {
         />
       </div>
       <div className="grid gap-3">
-        <Label htmlFor="k-memory">K-Context Window (0-10)</Label>
+        <Label>K-Context Window (0-10)</Label>
         <Slider
           max={10}
           step={1}

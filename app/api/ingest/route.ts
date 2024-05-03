@@ -3,6 +3,7 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
 import initialiseVectorStore from "@/utils/db";
 import { Model } from "@/lib/type";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +35,23 @@ export async function POST(req: Request) {
       modelName
     );
 
-    await PineconeStore.fromDocuments(splitDocuments, embeddings, {
-      pineconeIndex: pineconeIndex,
-      maxConcurrency: 5,
-      namespace: "text",
+    await Chroma.fromDocuments(splitDocuments, embeddings, {
+      collectionName:
+        "text" + modelName === "llama3:instruct"
+          ? "llama3-instruct"
+          : "llama3-70b",
+      numDimensions: modelName === "llama3:instruct" ? 4096 : 8192,
+      url: process.env.CHROMA_DB_URL!,
+      collectionMetadata: {
+        "hnsw:space": "cosine",
+      },
     });
+
+    // await PineconeStore.fromDocuments(splitDocuments, embeddings, {
+    //   pineconeIndex: pineconeIndex,
+    //   maxConcurrency: 5,
+    //   namespace: "text",
+    // });
 
     console.log(
       `Successfully indexed ${splitDocuments.length} documents in vector db.`
