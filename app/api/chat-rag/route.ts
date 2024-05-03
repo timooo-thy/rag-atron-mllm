@@ -8,9 +8,9 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import { vectorStore } from "@/utils/db";
 import { QNA_PROMPT, REPHASE_PROMPT } from "@/utils/prompt-templates";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
+import initialiseVectorStore from "@/utils/db";
 
 export const dynamic = "force-dynamic";
 
@@ -44,25 +44,25 @@ export async function POST(req: Request) {
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model: "llama3:70b-instruct",
+    model: "llama3:instruct",
     callbacks: [handlers],
     temperature: temperature,
   });
 
   const rephrasingLLM = new ChatOllama({
-    model: "llama3:70b-instruct",
+    model: "llama3:instruct",
     temperature: temperature,
   });
 
   // Retrieve the vector store
-  const retriever = (await vectorStore()).asRetriever({
+  const { vectorStore } = await initialiseVectorStore("llama3:instruct");
+
+  const retriever = vectorStore.asRetriever({
     k: similarity,
     filter: { caseId: parseInt(caseId) },
   });
 
-  // const results = await (
-  //   await vectorStore()
-  // ).similaritySearchWithScore(
+  // const results = vectorStore.similaritySearchWithScore(
   //   "new stock high-quality substance effects hours duration online purchase Singapore numbers 65 81234567",
   //   6,
   //   {
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
   // console.log(results);
 
   // const retriever = ScoreThresholdRetriever.fromVectorStore(
-  //   await vectorStore(),
+  //   vectorStore,
   //   {
   //     filter: { caseId: parseInt(caseId) },
   //     minSimilarityScore: 0.2,

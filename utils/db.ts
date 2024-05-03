@@ -3,27 +3,37 @@ import { PineconeStore } from "@langchain/pinecone";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { UpstashVectorStore } from "@langchain/community/vectorstores/upstash";
 import { Index } from "@upstash/vector";
+import { Model } from "@/lib/type";
 
-// Initialise Pinecone, PineconeStore, and OllamaEmbeddings
-const pinecone = new Pinecone();
-const pineconeIndex = pinecone.Index(process.env.PINECONE_INDEX!);
+const initialiseVectorStore = async (modelName: Model) => {
+  // Initialise Pinecone, PineconeStore, and OllamaEmbeddings
+  const pinecone = new Pinecone({
+    apiKey: process.env.PINECONE_API_KEY!,
+  });
+  const pineconeIndex = pinecone.Index(
+    modelName == "llama3:instruct"
+      ? process.env.PINECONE_INDEX_LLAMA!
+      : process.env.PINECONE_INDEX_70B!
+  );
 
-const embeddings = new OllamaEmbeddings({
-  model: "llama3:70b-instruct",
-});
-
-// Creating the index from the environment variables automatically.
-// const indexFromEnv = new Index();
-
-// const vectorStore = async () =>
-//   new UpstashVectorStore(embeddings, {
-//     index: indexFromEnv,
-//   });
-
-const vectorStore = async () =>
-  await PineconeStore.fromExistingIndex(embeddings, {
-    pineconeIndex,
-    namespace: "test",
+  const embeddings = new OllamaEmbeddings({
+    model: modelName,
   });
 
-export { vectorStore, pineconeIndex, embeddings };
+  // Creating the index from the environment variables automatically.
+  // const indexFromEnv = new Index();
+
+  // const vectorStore = async () =>
+  //   new UpstashVectorStore(embeddings, {
+  //     index: indexFromEnv,
+  //   });
+
+  const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+    pineconeIndex,
+    namespace: "text",
+  });
+
+  return { vectorStore, pineconeIndex, embeddings };
+};
+
+export default initialiseVectorStore;

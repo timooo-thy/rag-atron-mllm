@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
-import { embeddings, pineconeIndex } from "@/utils/db";
+import initialiseVectorStore from "@/utils/db";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,10 @@ export async function POST(req: NextRequest) {
     for (var doc of splitDocuments) {
       doc.metadata["caseId"] = 12345;
     }
+
+    const { embeddings, pineconeIndex } = await initialiseVectorStore(
+      "llama3:instruct"
+    );
 
     await PineconeStore.fromDocuments(splitDocuments, embeddings, {
       pineconeIndex: pineconeIndex,
