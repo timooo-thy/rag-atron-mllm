@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState } from "react";
 import { Input } from "./ui/input";
 import { toast } from "sonner";
 import { usePlaygroundSettings } from "@/lib/hooks";
@@ -10,11 +10,17 @@ import { Spinner } from "@nextui-org/spinner";
 export default function EmbedFilesButton() {
   const { modelName } = usePlaygroundSettings();
   const [file, setFile] = useState<File | null>(null);
-  const [isLoading, startTransition] = useTransition();
+  const [isLoading, setLoading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileUpload = async () => {
+    if (!modelName) {
+      toast.warning("Please select a model first.");
+      return;
+    }
+
     if (file) {
-      console.log(file.type);
+      setLoading(true);
       if (
         file.type === "text/plain" ||
         file.type === "text/rtf" ||
@@ -35,11 +41,16 @@ export default function EmbedFilesButton() {
             if (response.ok) {
               toast.success("Upload successful!");
               setFile(null);
+              if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
             } else {
               toast.error("Failed to upload file. Please try again.");
             }
           } catch (error) {
             toast.error("Failed to upload file. Please try again.");
+          } finally {
+            setLoading(false);
           }
         };
         reader.readAsText(file);
@@ -54,17 +65,14 @@ export default function EmbedFilesButton() {
         type="file"
         accept="text/plain, .txt, text/rtf, image/*"
         name="fileInput"
+        ref={fileInputRef}
         onChange={(e) => setFile(e.target.files && e.target.files[0])}
       />
       <Button
         className="bg-primary hover:opacity-80 hover:bg-primary w-full"
-        onClick={(e) => {
+        onClick={async (e) => {
           e.preventDefault();
-          if (!modelName) {
-            toast.warning("Please select a model first.");
-            return;
-          }
-          startTransition(async () => handleFileUpload());
+          await handleFileUpload();
         }}
         disabled={!file}
       >
