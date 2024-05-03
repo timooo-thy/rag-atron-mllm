@@ -39,7 +39,6 @@ export default function UploadFilesButton() {
           onClick={handleFileInputClick}
         >
           <span>Text/Image</span>
-
           <FileText className="h-5 w-5" />
           <Input
             type="file"

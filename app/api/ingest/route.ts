@@ -1,14 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
 import initialiseVectorStore from "@/utils/db";
+import { Model } from "@/lib/type";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const text = body.text;
-  const modelName = body.modelName;
+type Request = {
+  json: () => Promise<{
+    text: string;
+    modelName: Model;
+    caseEmbedId: string;
+  }>;
+};
+
+export async function POST(req: Request) {
+  const { text, modelName, caseEmbedId } = await req.json();
 
   try {
     const splitter = new RecursiveCharacterTextSplitter({
@@ -19,9 +26,8 @@ export async function POST(req: NextRequest) {
 
     const splitDocuments = await splitter.createDocuments([text]);
 
-    //TODO: Add caseId to metadata
     for (var doc of splitDocuments) {
-      doc.metadata["caseId"] = 12345;
+      doc.metadata["caseId"] = parseInt(caseEmbedId);
     }
 
     const { embeddings, pineconeIndex } = await initialiseVectorStore(

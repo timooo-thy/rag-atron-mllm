@@ -30,7 +30,7 @@ export default function Settings() {
     <fieldset className="grid gap-6 rounded-lg border p-4">
       <legend className="-ml-1 px-1 text-sm font-medium">Settings</legend>
       <div className="grid gap-3">
-        <Label htmlFor="model">Model</Label>
+        <Label htmlFor="model">Large Language Model</Label>
         <Select
           onValueChange={(value) => {
             setModelName(value as Model);
@@ -108,7 +108,7 @@ export default function Settings() {
         />
       </div>
       <div className="grid gap-3">
-        <Label htmlFor="k-retrieval">K-Similarity</Label>
+        <Label htmlFor="k-retrieval">K-Similarity (1-10)</Label>
         <Slider
           value={[similarity]}
           onValueChange={(e) => setSimilarity(e[0])}
@@ -119,7 +119,7 @@ export default function Settings() {
         />
       </div>
       <div className="grid gap-3">
-        <Label htmlFor="k-memory">K-Context Window</Label>
+        <Label htmlFor="k-memory">K-Context Window (0-10)</Label>
         <Slider
           max={10}
           step={1}

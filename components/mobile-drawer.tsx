@@ -1,4 +1,4 @@
-import { Bird, Rabbit, Settings, Turtle } from "lucide-react";
+import { Bird, Rabbit, SettingsIcon, Turtle } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Drawer,
@@ -22,6 +22,8 @@ import { Slider } from "./ui/slider";
 import React from "react";
 import { usePlaygroundSettings } from "@/lib/hooks";
 import { Model } from "@/lib/type";
+import Settings from "./settings";
+import EmbedFiles from "./embed-files";
 
 type MobileDrawerProps = {
   setInput: React.Dispatch<React.SetStateAction<string>>;
@@ -46,7 +48,7 @@ export default function MobileDrawer({ setInput }: MobileDrawerProps) {
       <Drawer>
         <DrawerTrigger asChild>
           <Button variant="ghost" size="icon" className="md:hidden">
-            <Settings className="size-4" />
+            <SettingsIcon className="size-4" />
             <span className="sr-only">Settings</span>
           </Button>
         </DrawerTrigger>
@@ -58,115 +60,7 @@ export default function MobileDrawer({ setInput }: MobileDrawerProps) {
             </DrawerDescription>
           </DrawerHeader>
           <form className="grid w-full items-start gap-6 overflow-auto p-4 pt-0">
-            <fieldset className="grid gap-6 rounded-lg border p-4">
-              <legend className="-ml-1 px-1 text-sm font-medium">
-                Settings
-              </legend>
-              <div className="grid gap-3">
-                <Label htmlFor="model">Model</Label>
-                <Select
-                  onValueChange={(value) => {
-                    setModelName(value as Model);
-                  }}
-                >
-                  <SelectTrigger
-                    id="model"
-                    className="items-start [&_[data-description]]:hidden"
-                  >
-                    <SelectValue placeholder="Select a model" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="llama3:instruct">
-                      <div className="flex items-start gap-3 text-muted-foreground">
-                        <Rabbit className="size-5" />
-                        <div className="grid gap-0.5">
-                          <p>
-                            <span className="font-medium text-foreground">
-                              Llama3:
-                            </span>{" "}
-                            8b-Instruct
-                          </p>
-                          <p className="text-xs" data-description>
-                            Our fastest model for general use cases.
-                          </p>
-                        </div>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="llama3:70b-instruct">
-                      <div className="flex items-start gap-3 text-muted-foreground">
-                        <Bird className="size-5" />
-                        <div className="grid gap-0.5">
-                          <p>
-                            <span className="font-medium text-foreground">
-                              LLama3:
-                            </span>{" "}
-                            70b-Instruct
-                          </p>
-                          <p className="text-xs" data-description>
-                            A multimodal LLM for complex tasks.
-                          </p>
-                        </div>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="llava:13b">
-                      <div className="flex items-start gap-3 text-muted-foreground">
-                        <Turtle className="size-5" />
-                        <div className="grid gap-0.5">
-                          <p>
-                            <span className="font-medium text-foreground">
-                              LLaVa:
-                            </span>{" "}
-                            13b
-                          </p>
-                          <p className="text-xs" data-description>
-                            A multimodal LLM for complex tasks.
-                          </p>
-                        </div>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="temperature">Temperature</Label>
-                <Input
-                  id="temperature"
-                  type="number"
-                  placeholder="0.4"
-                  value={temperature}
-                  onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="caseid">Case ID</Label>
-                <Input
-                  value={caseId}
-                  id="caseid"
-                  placeholder="10932"
-                  onChange={(e) => setCaseId(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="k-retrieval">K-Similarity</Label>
-                <Slider
-                  defaultValue={[4]}
-                  min={1}
-                  max={10}
-                  value={[similarity]}
-                  onValueChange={(e) => setSimilarity(e[0])}
-                  className="text-primary"
-                />
-              </div>
-              <div className="grid gap-3">
-                <Label htmlFor="k-memory">K-Context Window</Label>
-                <Slider
-                  value={[context]}
-                  onValueChange={(e) => setContext(e[0])}
-                  max={10}
-                  step={1}
-                />
-              </div>
-            </fieldset>
+            <Settings />
             <fieldset className="grid gap-6 rounded-lg border p-4">
               <legend className="-ml-1 px-1 text-sm font-medium">
                 Test Prompt
@@ -213,6 +107,7 @@ export default function MobileDrawer({ setInput }: MobileDrawerProps) {
                 </DrawerClose>
               </div>
             </fieldset>
+            <EmbedFiles />
           </form>
         </DrawerContent>
       </Drawer>

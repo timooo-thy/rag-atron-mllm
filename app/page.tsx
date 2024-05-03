@@ -9,12 +9,12 @@ import MobileDrawer from "@/components/mobile-drawer";
 import Settings from "@/components/settings";
 import TestPrompts from "@/components/test-prompts";
 import MessageContainer from "@/components/message-container";
-import EmbedFilesButton from "@/components/embed-files-button";
 import UploadFilesButton from "@/components/upload-files-button";
 import MicrophoneButton from "@/components/microphone-button";
 import SendMessageButton from "@/components/send-message-button";
 import TextContainer from "@/components/text-container";
 import { usePlaygroundSettings } from "@/lib/hooks";
+import EmbedFiles from "@/components/embed-files";
 
 export default function Chat() {
   const { caseId, similarity, context, temperature, modelName } =
@@ -66,7 +66,7 @@ export default function Chat() {
               <form className="grid w-full items-start gap-6">
                 <Settings />
                 <TestPrompts setInput={setInput} />
-                <EmbedFilesButton />
+                <EmbedFiles />
               </form>
             </div>
             <div className="relative flex h-full min-h-[50dvh] max-h-[90dvh] flex-col rounded-xl bg-muted/50 p- lg:col-span-2 border-2 ">

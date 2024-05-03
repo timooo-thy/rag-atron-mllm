@@ -21,3 +21,13 @@ export const formSchema = z.object({
     message: "Please select a model.",
   }),
 });
+
+export const embedSchema = z.object({
+  caseEmbedId: z.coerce
+    .number()
+    .positive("Case ID is empty")
+    .int("Case ID is invalid"),
+  modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
+    message: "Please select a model.",
+  }),
+});
