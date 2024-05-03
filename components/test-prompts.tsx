@@ -15,7 +15,7 @@ export default function TestPrompts({ setInput }: TestPromptsProps) {
             "Based on the messages, did the accused sell illegal substances to the buyer?"
           );
         }}
-        className="bg-primary hover:opacity-80 hover:bg-primary inline-block w-full h-20 text-left whitespace-normal"
+        className="bg-primary hover:opacity-80 hover:bg-primar inline-block w-full h-20 text-left whitespace-normal"
       >
         Based on the messages, did the accused sell illegal substances to the
         buyer?
