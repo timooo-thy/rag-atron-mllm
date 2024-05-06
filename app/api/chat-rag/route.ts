@@ -9,18 +9,25 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import { QNA_PROMPT, REPHASE_PROMPT } from "@/utils/prompt-templates";
+import { REPHASE_PROMPT, QNA_PROMPT } from "@/utils/prompt-templates";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
-import { Model } from "@/lib/type";
 import { formSchema } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 const formatMessage = (message: VercelChatMessage) => {
   return message.role === "user"
-    ? new HumanMessage(message.content)
-    : new AIMessage(message.content);
+    ? new HumanMessage(
+        "<|start_header_id|>user<|end_header_id|>" +
+          message.content +
+          "<|eot_id|>"
+      )
+    : new AIMessage(
+        "<|start_header_id|>assistant<|end_header_id|>" +
+          message.content +
+          "<|eot_id|>"
+      );
 };
 
 export async function POST(req: Request) {
@@ -36,7 +43,10 @@ export async function POST(req: Request) {
   // Get the latest k buffer window (memory)
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
-  const currentMessageContent = typedMessages[typedMessages.length - 1].content;
+  const currentMessageContent =
+    "<|start_header_id|>user<|end_header_id|>" +
+    typedMessages[typedMessages.length - 1].content +
+    "<|eot_id|>";
 
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
@@ -66,25 +76,12 @@ export async function POST(req: Request) {
     filter: { caseId: caseId },
   });
 
-  // const results = await vectorStore.similaritySearchWithScore(
-  //   "new stock high-quality substance effects hours duration online purchase Singapore numbers 65 81234567",
-  //   6,
-  //   {
-  //     caseId: 12345,
-  //   }
-  // );
-
-  // console.log(results);
-
-  // const retriever = ScoreThresholdRetriever.fromVectorStore(
-  //   vectorStore,
-  //   {
-  //     filter: { caseId: parseInt(caseId) },
-  //     minSimilarityScore: 0.2,
-  //     maxK: 10,
-  //     kIncrement: 1,
-  //   }
-  // );
+  // const retriever = ScoreThresholdRetriever.fromVectorStore(vectorStore, {
+  //   filter: { caseId: caseId },
+  //   minSimilarityScore: 0.4,
+  //   maxK: 20,
+  //   kIncrement: 1,
+  // });
 
   // Create history aware retriever chain
   const historyAwareRetrieverChain = await createHistoryAwareRetriever({
