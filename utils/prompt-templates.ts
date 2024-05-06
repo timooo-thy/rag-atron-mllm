@@ -1,7 +1,6 @@
 import {
   ChatPromptTemplate,
   MessagesPlaceholder,
-  PromptTemplate,
 } from "@langchain/core/prompts";
 
 const QNA_PROMPT = ChatPromptTemplate.fromMessages([
@@ -17,7 +16,8 @@ const QNA_PROMPT = ChatPromptTemplate.fromMessages([
   new MessagesPlaceholder("chat_history"),
   [
     "user",
-    "<|begin_of_text|><|start_header_id|>user<|end_header_id|>{input}\n\nCase ID: {case_id}<|eot_id|>",
+    "<|begin_of_text|><|start_header_id|>user<|end_header_id|>{input}\n\nCase ID: {case_id}<|eot_id|>\n\n" +
+      "<|start_header_id|>assistant<|end_header_id|>",
   ],
 ]);
 
