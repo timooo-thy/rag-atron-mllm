@@ -2,21 +2,16 @@ import { NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
 import initialiseVectorStore from "@/utils/db";
-import { Model } from "@/lib/type";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
+import { embedSchema } from "@/lib/utils";
+import { ChromaClient } from "chromadb";
 
 export const dynamic = "force-dynamic";
 
-type Request = {
-  json: () => Promise<{
-    text: string;
-    modelName: Model;
-    caseEmbedId: string;
-  }>;
-};
-
 export async function POST(req: Request) {
-  const { text, modelName, caseEmbedId } = await req.json();
+  const body = await req.json();
+  const result = embedSchema.parse(body);
+  const { caseEmbedId, modelName, text } = result;
 
   try {
     const splitter = new RecursiveCharacterTextSplitter({
@@ -28,19 +23,22 @@ export async function POST(req: Request) {
     const splitDocuments = await splitter.createDocuments([text]);
 
     for (var doc of splitDocuments) {
-      doc.metadata["caseId"] = parseInt(caseEmbedId);
+      doc.metadata["caseId"] = caseEmbedId;
     }
 
     const { embeddings, pineconeIndex } = await initialiseVectorStore(
       modelName
     );
 
+    // const client = new ChromaClient({
+    //   path: process.env.CHROMA_DB_URL!,
+    // });
+    // console.log(await client.listCollections());
+
     await Chroma.fromDocuments(splitDocuments, embeddings, {
       collectionName:
-        "text" + modelName === "llama3:instruct"
-          ? "llama3-instruct"
-          : "llama3-70b",
-      numDimensions: modelName === "llama3:instruct" ? 4096 : 8192,
+        "text-" +
+        (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
       url: process.env.CHROMA_DB_URL!,
       collectionMetadata: {
         "hnsw:space": "cosine",

@@ -13,6 +13,7 @@ import { QNA_PROMPT, REPHASE_PROMPT } from "@/utils/prompt-templates";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
 import { Model } from "@/lib/type";
+import { formSchema } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -22,26 +23,20 @@ const formatMessage = (message: VercelChatMessage) => {
     : new AIMessage(message.content);
 };
 
-type Request = {
-  json: () => Promise<{
-    messages: VercelChatMessage[];
-    caseId: string;
-    temperature: number;
-    similarity: number;
-    context: number;
-    modelName: Model;
-  }>;
-};
-
 export async function POST(req: Request) {
+  const body = await req.json();
+  const result = formSchema.parse(body);
   const { messages, caseId, temperature, similarity, context, modelName } =
-    await req.json();
+    result;
+  const typedMessages = messages as VercelChatMessage[];
 
-  const formattedPreviousMessages = messages.slice(0, -1).map(formatMessage);
+  const formattedPreviousMessages = typedMessages
+    .slice(0, -1)
+    .map(formatMessage);
   // Get the latest k buffer window (memory)
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
-  const currentMessageContent = messages[messages.length - 1].content;
+  const currentMessageContent = typedMessages[typedMessages.length - 1].content;
 
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
@@ -62,22 +57,20 @@ export async function POST(req: Request) {
 
   const vectorStore = await Chroma.fromExistingCollection(embeddings, {
     collectionName:
-      "text" + modelName === "llama3:instruct"
-        ? "llama3-instruct"
-        : "llama3-70b",
+      "text-" + (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
     url: process.env.CHROMA_DB_URL!,
   });
 
   const retriever = vectorStore.asRetriever({
     k: similarity,
-    filter: { caseId: parseInt(caseId) },
+    filter: { caseId: caseId },
   });
 
-  // const results = vectorStore.similaritySearchWithScore(
+  // const results = await vectorStore.similaritySearchWithScore(
   //   "new stock high-quality substance effects hours duration online purchase Singapore numbers 65 81234567",
   //   6,
   //   {
-  //     caseId: parseInt(caseId),
+  //     caseId: 12345,
   //   }
   // );
 

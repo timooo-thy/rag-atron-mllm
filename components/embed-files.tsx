@@ -29,13 +29,6 @@ export default function EmbedFiles() {
   };
 
   const handleFileUpload = async () => {
-    const result = embedSchema.safeParse({ caseEmbedId, modelName });
-
-    if (!result.success) {
-      toast.warning(result.error.errors[0].message);
-      return;
-    }
-
     if (file) {
       setLoading(true);
       if (
@@ -46,6 +39,16 @@ export default function EmbedFiles() {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const text = e.target?.result;
+          const result = embedSchema.safeParse({
+            caseEmbedId,
+            modelName,
+            text,
+          });
+
+          if (!result.success) {
+            toast.warning(result.error.errors[0].message);
+            return;
+          }
 
           try {
             const response = await fetch("/api/ingest", {
@@ -53,7 +56,7 @@ export default function EmbedFiles() {
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({ text, modelName, caseEmbedId }),
+              body: JSON.stringify(result.data),
             });
             if (response.ok) {
               toast.success("Upload successful!");
