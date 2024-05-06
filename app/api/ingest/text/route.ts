@@ -3,14 +3,15 @@ import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
 import initialiseVectorStore from "@/utils/db";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
-import { embedSchema } from "@/lib/utils";
+import { embedTextSchema } from "@/lib/utils";
 import { ChromaClient } from "chromadb";
+import { TextLoader } from "langchain/document_loaders/fs/text";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  const result = embedSchema.parse(body);
+  const result = embedTextSchema.parse(body);
   const { caseEmbedId, modelName, text } = result;
 
   try {

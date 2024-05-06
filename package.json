@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.569.0",
+    "@aws-sdk/s3-request-presigner": "^3.569.0",
+    "@azure/storage-blob": "^12.17.0",
     "@langchain/community": "^0.0.53",
     "@langchain/pinecone": "^0.0.4",
     "@nextui-org/react": "^2.3.6",

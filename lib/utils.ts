@@ -24,8 +24,18 @@ export const formSchema = z
   })
   .passthrough();
 
-export const embedSchema = z.object({
+export const embedTextSchema = z.object({
   text: z.string(),
+  caseEmbedId: z.coerce
+    .number()
+    .positive("Case ID is empty")
+    .int("Case ID is invalid"),
+  modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
+    message: "Please select a model.",
+  }),
+});
+
+export const embedImageSchema = z.object({
   caseEmbedId: z.coerce
     .number()
     .positive("Case ID is empty")

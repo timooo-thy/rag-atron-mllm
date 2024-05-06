@@ -7,7 +7,7 @@ import { usePlaygroundSettings } from "@/lib/hooks";
 import { Button } from "./ui/button";
 import { Spinner } from "@nextui-org/spinner";
 import { Label } from "./ui/label";
-import { embedSchema } from "@/lib/utils";
+import { embedImageSchema, embedTextSchema } from "@/lib/utils";
 import { Paperclip, Trash2, X } from "lucide-react";
 
 export default function EmbedFiles() {
@@ -39,7 +39,7 @@ export default function EmbedFiles() {
         const reader = new FileReader();
         reader.onload = async (e) => {
           const text = e.target?.result;
-          const result = embedSchema.safeParse({
+          const result = embedTextSchema.safeParse({
             caseEmbedId,
             modelName,
             text,
@@ -51,7 +51,7 @@ export default function EmbedFiles() {
           }
 
           try {
-            const response = await fetch("/api/ingest", {
+            const response = await fetch("/api/ingest/text", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
@@ -74,6 +74,41 @@ export default function EmbedFiles() {
           }
         };
         reader.readAsText(file);
+      }
+      try {
+        const result = embedImageSchema.safeParse({
+          caseEmbedId,
+          modelName,
+        });
+
+        if (!result.success) {
+          toast.warning(result.error.errors[0].message);
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("caseId", caseEmbedId);
+        formData.append("modelName", result.data.modelName);
+
+        const response = await fetch("/api/ingest/image", {
+          method: "POST",
+          body: formData,
+        });
+
+        if (response.ok) {
+          toast.success("Upload successful!");
+          setFile(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = "";
+          }
+        } else {
+          toast.error("Failed to upload file. Please try again.");
+        }
+      } catch (error) {
+        toast.error("Failed to upload file. Please try again.");
+      } finally {
+        setLoading(false);
       }
     }
   };

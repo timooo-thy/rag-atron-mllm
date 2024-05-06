@@ -76,6 +76,19 @@ export async function POST(req: Request) {
     filter: { caseId: caseId },
   });
 
+  const s = await Chroma.fromExistingCollection(embeddings, {
+    collectionName: "images",
+    url: process.env.CHROMA_DB_URL!,
+  });
+
+  const results = await s.similaritySearchWithScore("blue nike bag", 10, {
+    caseId: caseId,
+  });
+
+  for (const r of results) {
+    console.log(r);
+  }
+
   // const retriever = ScoreThresholdRetriever.fromVectorStore(vectorStore, {
   //   filter: { caseId: caseId },
   //   minSimilarityScore: 0.4,
