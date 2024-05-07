@@ -9,10 +9,17 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
-import { REPHASE_PROMPT, QNA_PROMPT } from "@/utils/prompt-templates";
+import {
+  REPHRASE_PROMPT,
+  QNA_PROMPT,
+  RETRIEVER_PROMPT,
+  IMAGE_PROMPT,
+} from "@/utils/prompt-templates";
+import { PromptTemplate } from "@langchain/core/prompts";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
+import { Model } from "@/lib/type";
 
 export const dynamic = "force-dynamic";
 
@@ -62,32 +69,16 @@ export async function POST(req: Request) {
     temperature: temperature,
   });
 
-  // Retrieve the vector store
-  const { embeddings } = await initialiseVectorStore(modelName);
-
-  const vectorStore = await Chroma.fromExistingCollection(embeddings, {
-    collectionName:
-      "text-" + (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
-    url: process.env.CHROMA_DB_URL!,
-  });
+  const { vectorStore, combineDocsChains } = await getRetriever(
+    currentMessageContent,
+    modelName,
+    llm
+  );
 
   const retriever = vectorStore.asRetriever({
     k: similarity,
     filter: { caseId: caseId },
   });
-
-  const s = await Chroma.fromExistingCollection(embeddings, {
-    collectionName: "images",
-    url: process.env.CHROMA_DB_URL!,
-  });
-
-  const results = await s.similaritySearchWithScore("blue nike bag", 10, {
-    caseId: caseId,
-  });
-
-  for (const r of results) {
-    console.log(r);
-  }
 
   // const retriever = ScoreThresholdRetriever.fromVectorStore(vectorStore, {
   //   filter: { caseId: caseId },
@@ -100,16 +91,10 @@ export async function POST(req: Request) {
   const historyAwareRetrieverChain = await createHistoryAwareRetriever({
     llm: rephrasingLLM,
     retriever: retriever,
-    rephrasePrompt: REPHASE_PROMPT,
+    rephrasePrompt: REPHRASE_PROMPT,
   });
 
   // RAG pipeline
-  const combineDocsChains = await createStuffDocumentsChain({
-    llm: llm,
-    prompt: QNA_PROMPT,
-    documentSeparator: "\n-----------\n",
-  });
-
   const retrieverChain = await createRetrievalChain({
     combineDocsChain: combineDocsChains,
     retriever: historyAwareRetrieverChain,
@@ -123,4 +108,56 @@ export async function POST(req: Request) {
   });
 
   return new StreamingTextResponse(stream);
+}
+
+async function getRetriever(query: string, modelName: Model, llm: ChatOllama) {
+  const retreiverLLM = new ChatOllama({
+    model: "llama3:70b-instruct",
+    temperature: 0,
+  });
+
+  const selectRetrieverChain = RETRIEVER_PROMPT.pipe(retreiverLLM);
+
+  const response = await selectRetrieverChain.invoke({
+    query: query,
+  });
+
+  // Retrieve the vector store
+  const { embeddings } = await initialiseVectorStore(modelName);
+
+  let vectorStore;
+  let combineDocsChains;
+
+  if (response.content === "Image Lookup") {
+    vectorStore = await Chroma.fromExistingCollection(embeddings, {
+      collectionName:
+        "images-" +
+        (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
+      url: process.env.CHROMA_DB_URL!,
+    });
+    combineDocsChains = await createStuffDocumentsChain({
+      llm: llm,
+      prompt: IMAGE_PROMPT,
+      documentSeparator: "\n-----------\n",
+      documentPrompt: new PromptTemplate({
+        inputVariables: ["caseId", "url", "page_content"],
+        template: `caseId: {caseId}
+        url: {url} 
+        page content: {page_content}`,
+      }),
+    });
+  } else {
+    vectorStore = await Chroma.fromExistingCollection(embeddings, {
+      collectionName:
+        "text-" +
+        (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
+      url: process.env.CHROMA_DB_URL!,
+    });
+    combineDocsChains = await createStuffDocumentsChain({
+      llm: llm,
+      prompt: QNA_PROMPT,
+      documentSeparator: "\n-----------\n",
+    });
+  }
+  return { vectorStore, combineDocsChains };
 }

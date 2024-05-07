@@ -79,6 +79,7 @@ export default function EmbedFiles() {
         const result = embedImageSchema.safeParse({
           caseEmbedId,
           modelName,
+          file,
         });
 
         if (!result.success) {

@@ -13,9 +13,13 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
-  const file = formData.get("file") as File;
-  const modelName = formData.get("modelName") as Model;
-  const caseId = formData.get("caseId") as string;
+  const file: File | null = formData.get("file") as unknown as File;
+  const modelName: Model | null = formData.get("modelName") as unknown as Model;
+  const caseId: string | null = formData.get("caseId") as unknown as string;
+
+  if (!file || !modelName || !caseId) {
+    return NextResponse.json({ error: "No file provided" }, { status: 400 });
+  }
 
   // Create s3 client
   const s3Client = new S3Client({
@@ -53,8 +57,7 @@ export async function POST(req: Request) {
 
     // Fetch image from s3 and convert to ArrayBuffer
     const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;
-    const fetchImageUrl = await fetch(imageUrl);
-    const responseArrBuffer = await fetchImageUrl.arrayBuffer();
+    const responseArrBuffer = await file.arrayBuffer();
 
     // Describe image using llava:13b model
     const llm = new ChatOllama({
@@ -92,7 +95,9 @@ export async function POST(req: Request) {
       [{ id: uuid, url: imageUrl, caseId: parseInt(caseId) }],
       embeddings,
       {
-        collectionName: "images",
+        collectionName:
+          "images-" +
+          (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
         url: process.env.CHROMA_DB_URL!,
         collectionMetadata: {
           "hnsw:space": "cosine",

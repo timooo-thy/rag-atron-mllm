@@ -21,7 +21,21 @@ const QNA_PROMPT = ChatPromptTemplate.fromMessages([
   ],
 ]);
 
-const REPHASE_PROMPT = ChatPromptTemplate.fromMessages([
+const IMAGE_PROMPT = ChatPromptTemplate.fromMessages([
+  [
+    "system",
+    "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a professional Intelligence Officer specialising in law enforcement analysis." +
+      "Only answer with the given context\n\n{context}\n\nReturn the URLs of the identified images in proper markdown table format (URL and Description).<|eot_id|>\n\n",
+  ],
+  new MessagesPlaceholder("chat_history"),
+  [
+    "user",
+    "<|begin_of_text|><|start_header_id|>user<|end_header_id|>{input}\n\nCase ID: {case_id}<|eot_id|>\n\n" +
+      "<|start_header_id|>assistant<|end_header_id|>",
+  ],
+]);
+
+const REPHRASE_PROMPT = ChatPromptTemplate.fromMessages([
   new MessagesPlaceholder("chat_history"),
   [
     "user",
@@ -30,8 +44,24 @@ const REPHASE_PROMPT = ChatPromptTemplate.fromMessages([
   [
     "user",
     "<|begin_of_text|><|start_header_id|>user<|end_header_id|>Given the above conversation, generate a purposeful and descriptive search query to look up in order to get information relevant to the current question. " +
-      "Do not leave out any relevant keywords. Only return the query and no other text.<|eot_id|>",
+      "Do not leave out any relevant keywords. Only return the query and no other text.<|eot_id|>" +
+      "<|start_header_id|>assistant<|end_header_id|>",
   ],
 ]);
 
-export { QNA_PROMPT, REPHASE_PROMPT };
+const RETRIEVER_PROMPT = ChatPromptTemplate.fromMessages([
+  [
+    "system",
+    "<|begin_of_text|><|start_header_id|>system<|end_header_id|>" +
+      "Classify the type of user query into one of two categories: Image Lookup or Case Analysis.\n" +
+      "If user did not ask anything image related, return Case Analysis" +
+      "Return only the query type and no other text that best fit the query by the user.<|eot_id|>",
+  ],
+  [
+    "user",
+    "<|begin_of_text|><|start_header_id|>user<|end_header_id|>{query}\n\n" +
+      "<|start_header_id|>assistant<|end_header_id|>",
+  ],
+]);
+
+export { QNA_PROMPT, REPHRASE_PROMPT, RETRIEVER_PROMPT, IMAGE_PROMPT };
