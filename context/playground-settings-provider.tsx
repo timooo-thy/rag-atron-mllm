@@ -1,7 +1,7 @@
 "use client";
 
 import { Model } from "@/lib/type";
-import { createContext, useRef, useState } from "react";
+import { createContext, useState } from "react";
 
 type PlaygroundSettingsContextType = {
   caseId: string;
@@ -18,6 +18,8 @@ type PlaygroundSettingsContextType = {
   setCaseEmbedId: React.Dispatch<React.SetStateAction<string>>;
   file: File | null;
   setFile: React.Dispatch<React.SetStateAction<File | null>>;
+  chatFiles: File[] | [];
+  setChatFiles: React.Dispatch<React.SetStateAction<File[]>>;
 };
 
 export const PlaygroundSettingsContext =
@@ -35,8 +37,8 @@ export default function PlaygroundSettingsProvider({
   const [similarity, setSimilarity] = useState(4);
   const [modelName, setModelName] = useState<Model | null>(null);
   const [caseEmbedId, setCaseEmbedId] = useState("");
-
   const [file, setFile] = useState<File | null>(null);
+  const [chatFiles, setChatFiles] = useState<File[]>([]);
 
   return (
     <PlaygroundSettingsContext.Provider
@@ -55,6 +57,8 @@ export default function PlaygroundSettingsProvider({
         setCaseEmbedId,
         file,
         setFile,
+        chatFiles,
+        setChatFiles,
       }}
     >
       {children}

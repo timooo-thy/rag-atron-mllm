@@ -118,7 +118,7 @@ export default function EmbedFiles() {
     <fieldset className="grid gap-6 rounded-lg border p-4">
       <legend className="-ml-1 px-1 text-sm font-medium">Embed Files</legend>
       <div className="grid gap-3">
-        <Label htmlFor="caseId">Case ID (For embedding purposes)</Label>
+        <Label htmlFor="caseId">Case ID (Embedding purposes)</Label>
         <Input
           id="caseId"
           placeholder="12345"
@@ -135,7 +135,7 @@ export default function EmbedFiles() {
           <Paperclip className="size-4" />
           <Input
             type="file"
-            accept="text/plain, .txt, text/rtf, image/*"
+            accept="text/plain, .txt, text/rtf, image/png, image/jpeg"
             name="fileInput"
             ref={fileInputRef}
             onChange={(e) => setFile(e.target.files && e.target.files[0])}

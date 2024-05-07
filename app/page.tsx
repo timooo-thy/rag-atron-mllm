@@ -15,11 +15,19 @@ import SendMessageButton from "@/components/send-message-button";
 import TextContainer from "@/components/text-container";
 import { usePlaygroundSettings } from "@/lib/hooks";
 import EmbedFiles from "@/components/embed-files";
+import { useState } from "react";
 
 export default function Chat() {
-  const { caseId, similarity, context, temperature, modelName } =
-    usePlaygroundSettings();
-
+  const {
+    caseId,
+    similarity,
+    context,
+    temperature,
+    modelName,
+    chatFiles,
+    setChatFiles,
+  } = usePlaygroundSettings();
+  const [base64Files, setBase64Files] = useState<string[]>([]);
   const {
     messages,
     input,
@@ -35,17 +43,52 @@ export default function Chat() {
       similarity: similarity,
       context: context,
       modelName: modelName,
+      chatFilesBase64: base64Files,
     },
   });
 
   const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+
+    const readFiles = (files: File[]) => {
+      return Promise.all(
+        files.map((file) => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              if (
+                e.target &&
+                e.target.result &&
+                typeof e.target.result === "string"
+              ) {
+                resolve(e.target.result);
+              } else {
+                reject(new Error("Failed to read file"));
+              }
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+    };
+
+    readFiles(chatFiles)
+      .then((base64Files) => {
+        setBase64Files(base64Files as string[]);
+        console.log(base64Files);
+      })
+      .catch((error) => {
+        toast.warning("Error reading files:", error);
+      });
+
     const result = formSchema.safeParse({
       caseId,
       temperature,
       similarity,
       context,
       modelName,
+      base64Files,
     });
 
     if (!result.success) {
@@ -53,15 +96,17 @@ export default function Chat() {
       return;
     }
     handleSubmit(e);
+    setBase64Files([]);
+    setChatFiles([]);
   };
 
   return (
-    <div className="grid h-screen w-full pl-[53px]">
+    <div className="grid h-dvh w-full pl-[53px]">
       <TooltipProvider>
         <SideNav />
-        <div className="flex flex-col">
-          <MobileDrawer setInput={setInput} />
-          <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-2 lg:grid-cols-3">
+        <MobileDrawer setInput={setInput} />
+        <div className="flex flex-col m-auto md:w-[95%] lg:w-[75%] w-full">
+          <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-3">
             <div className="relative hidden flex-col items-start gap-8 md:flex">
               <form className="grid w-full items-start gap-6">
                 <Settings />
@@ -69,10 +114,10 @@ export default function Chat() {
                 <EmbedFiles />
               </form>
             </div>
-            <div className="relative flex h-full min-h-[50dvh] max-h-[90dvh] flex-col rounded-xl bg-muted/50 p- lg:col-span-2 border-2 ">
+            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-dvh">
               <MessageContainer messages={messages} />
               <form
-                className="relative overflow-hidden rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
+                className="pb-5 relative overflow-hidden rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
                 onSubmit={handleMessageSubmit}
               >
                 <TextContainer

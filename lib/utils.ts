@@ -24,6 +24,7 @@ export const formSchema = z
     modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
       message: "Please select a model.",
     }),
+    chatFilesBase64: z.array(z.string()).optional(),
   })
   .passthrough();
 

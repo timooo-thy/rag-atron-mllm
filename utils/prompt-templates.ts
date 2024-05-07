@@ -25,7 +25,8 @@ const IMAGE_PROMPT = ChatPromptTemplate.fromMessages([
   [
     "system",
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a professional Intelligence Officer specialising in law enforcement analysis." +
-      "Only answer with the given context\n\n{context}\n\nReturn the URLs of the identified images in proper markdown table format (URL and Description).<|eot_id|>\n\n",
+      "Only answer with the given context\n\n{context}\n\nReturn the URLs of the identified images in proper markdown table format (URL and Description).\n\n" +
+      "If context is blank, reply with 'No relevant context found with the Case ID specified. Please try again.'<|eot_id|>",
   ],
   new MessagesPlaceholder("chat_history"),
   [
@@ -53,8 +54,9 @@ const RETRIEVER_PROMPT = ChatPromptTemplate.fromMessages([
   [
     "system",
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>" +
-      "Classify the type of user query into one of two categories: Image Lookup or Case Analysis.\n" +
-      "If user did not ask anything image related, return Case Analysis" +
+      "Classify the type of user query into one of three categories: Image Lookup or Describe Image or Case Analysis.\n" +
+      "If user did not ask anything image related, return Case Analysis. " +
+      "If user asked to describe and image or caption exhibits, return Describe Image. " +
       "Return only the query type and no other text that best fit the query by the user.<|eot_id|>",
   ],
   [

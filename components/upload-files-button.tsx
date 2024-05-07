@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,9 +10,11 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { Button } from "./ui/button";
 import { FileText, Paperclip } from "lucide-react";
 import { Input } from "./ui/input";
+import { usePlaygroundSettings } from "@/lib/hooks";
 
 export default function UploadFilesButton() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setChatFiles } = usePlaygroundSettings();
 
   const handleFileInputClick = () => {
     fileInputRef.current?.click();
@@ -38,14 +40,18 @@ export default function UploadFilesButton() {
           className="bg-transparent flex justify-between gap-x-1 text-black hover:bg-gray-100 w-full"
           onClick={handleFileInputClick}
         >
-          <span>Text/Image</span>
+          <span>Image(s)</span>
           <FileText className="h-5 w-5" />
           <Input
             type="file"
-            accept="text/plain, .txt, image/*"
+            accept="image/png, image/jpeg"
             name="fileInput"
             className="hidden"
             ref={fileInputRef}
+            multiple
+            onChange={(e) =>
+              e.target.files && setChatFiles(Array.from(e.target.files))
+            }
           />
         </Button>
       </DropdownMenuContent>

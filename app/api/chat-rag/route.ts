@@ -37,11 +37,24 @@ const formatMessage = (message: VercelChatMessage) => {
       );
 };
 
+type Content = {
+  type: string;
+  text?: string;
+  image_url?: string;
+};
+
 export async function POST(req: Request) {
   const body = await req.json();
   const result = formSchema.parse(body);
-  const { messages, caseId, temperature, similarity, context, modelName } =
-    result;
+  const {
+    messages,
+    caseId,
+    temperature,
+    similarity,
+    context,
+    modelName,
+    chatFilesBase64,
+  } = result;
   const typedMessages = messages as VercelChatMessage[];
 
   const formattedPreviousMessages = typedMessages
@@ -59,9 +72,11 @@ export async function POST(req: Request) {
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model: modelName,
+    model:
+      chatFilesBase64 && chatFilesBase64.length > 0 ? "llava:13b" : modelName,
     callbacks: [handlers],
-    temperature: temperature,
+    temperature:
+      chatFilesBase64 && chatFilesBase64.length > 0 ? 0.5 : temperature,
   });
 
   const rephrasingLLM = new ChatOllama({
@@ -75,44 +90,74 @@ export async function POST(req: Request) {
     llm
   );
 
-  const retriever = vectorStore.asRetriever({
-    k: similarity,
-    filter: { caseId: caseId },
-  });
+  if (
+    !vectorStore &&
+    !combineDocsChains &&
+    chatFilesBase64 &&
+    chatFilesBase64.length > 0
+  ) {
+    let content: Content[] = [
+      {
+        type: "text",
+        text: `Describe each image succinctly to be used as exhibit captioning. 
+        Return in markdown table format with exhibition names and descriptions. 
+        Each image has one name and description.
+        User Query: ${currentMessageContent}`,
+      },
+    ];
 
-  // const retriever = ScoreThresholdRetriever.fromVectorStore(vectorStore, {
-  //   filter: { caseId: caseId },
-  //   minSimilarityScore: 0.4,
-  //   maxK: 20,
-  //   kIncrement: 1,
-  // });
+    chatFilesBase64.map((url) => {
+      content.push({
+        type: "image_url",
+        image_url: url,
+      });
+    });
 
-  // Create history aware retriever chain
-  const historyAwareRetrieverChain = await createHistoryAwareRetriever({
-    llm: rephrasingLLM,
-    retriever: retriever,
-    rephrasePrompt: REPHRASE_PROMPT,
-  });
+    llm.invoke([
+      new HumanMessage({
+        content: content,
+      }),
+    ]);
+  } else if (vectorStore && combineDocsChains) {
+    const retriever = vectorStore.asRetriever({
+      k: similarity,
+      filter: { caseId: caseId },
+    });
 
-  // RAG pipeline
-  const retrieverChain = await createRetrievalChain({
-    combineDocsChain: combineDocsChains,
-    retriever: historyAwareRetrieverChain,
-  });
+    // const retriever = ScoreThresholdRetriever.fromVectorStore(vectorStore, {
+    //   filter: { caseId: caseId },
+    //   minSimilarityScore: 0.4,
+    //   maxK: 20,
+    //   kIncrement: 1,
+    // });
 
-  // Invoke the chain and stream response back
-  retrieverChain.invoke({
-    chat_history: latestKBufferWindow,
-    input: currentMessageContent,
-    case_id: caseId,
-  });
+    // Create history aware retriever chain
+    const historyAwareRetrieverChain = await createHistoryAwareRetriever({
+      llm: rephrasingLLM,
+      retriever: retriever,
+      rephrasePrompt: REPHRASE_PROMPT,
+    });
+
+    // RAG pipeline
+    const retrieverChain = await createRetrievalChain({
+      combineDocsChain: combineDocsChains,
+      retriever: historyAwareRetrieverChain,
+    });
+
+    // Invoke the chain and stream response back
+    retrieverChain.invoke({
+      chat_history: latestKBufferWindow,
+      input: currentMessageContent,
+      case_id: caseId,
+    });
+  }
 
   return new StreamingTextResponse(stream);
 }
 
 async function getRetriever(query: string, modelName: Model, llm: ChatOllama) {
   const retreiverLLM = new ChatOllama({
-    model: "llama3:70b-instruct",
+    model: "llama3:instruct",
     temperature: 0,
   });
 
@@ -146,6 +191,8 @@ async function getRetriever(query: string, modelName: Model, llm: ChatOllama) {
         page content: {page_content}`,
       }),
     });
+  } else if (response.content === "Describe Image") {
+    return { vectorStore, combineDocsChains };
   } else {
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
       collectionName:
