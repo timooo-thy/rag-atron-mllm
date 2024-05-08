@@ -34,9 +34,6 @@ export const embedTextSchema = z.object({
     .number()
     .positive("Case ID is empty")
     .int("Case ID is invalid"),
-  modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
-    message: "Please select a model.",
-  }),
 });
 
 export const embedImageSchema = z.object({
@@ -44,9 +41,6 @@ export const embedImageSchema = z.object({
     .number()
     .positive("Case ID is empty")
     .int("Case ID is invalid"),
-  modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
-    message: "Please select a model.",
-  }),
   file: z
     .instanceof(File)
     .refine((file) => {

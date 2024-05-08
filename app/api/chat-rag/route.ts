@@ -19,7 +19,6 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
-import { Model } from "@/lib/type";
 
 export const dynamic = "force-dynamic";
 
@@ -75,8 +74,7 @@ export async function POST(req: Request) {
     model:
       chatFilesBase64 && chatFilesBase64.length > 0 ? "llava:13b" : modelName,
     callbacks: [handlers],
-    temperature:
-      chatFilesBase64 && chatFilesBase64.length > 0 ? 0.5 : temperature,
+    temperature: temperature,
   });
 
   const rephrasingLLM = new ChatOllama({
@@ -84,18 +82,7 @@ export async function POST(req: Request) {
     temperature: temperature,
   });
 
-  const { vectorStore, combineDocsChains } = await getRetriever(
-    currentMessageContent,
-    modelName,
-    llm
-  );
-
-  if (
-    !vectorStore &&
-    !combineDocsChains &&
-    chatFilesBase64 &&
-    chatFilesBase64.length > 0
-  ) {
+  if (chatFilesBase64 && chatFilesBase64.length > 0) {
     let content: Content[] = [
       {
         type: "text",
@@ -118,7 +105,12 @@ export async function POST(req: Request) {
         content: content,
       }),
     ]);
-  } else if (vectorStore && combineDocsChains) {
+  } else {
+    const { vectorStore, combineDocsChains } = await getRetriever(
+      currentMessageContent,
+      llm
+    );
+
     const retriever = vectorStore.asRetriever({
       k: similarity,
       filter: { caseId: caseId },
@@ -155,7 +147,7 @@ export async function POST(req: Request) {
   return new StreamingTextResponse(stream);
 }
 
-async function getRetriever(query: string, modelName: Model, llm: ChatOllama) {
+async function getRetriever(query: string, llm: ChatOllama) {
   const retreiverLLM = new ChatOllama({
     model: "llama3:instruct",
     temperature: 0,
@@ -168,16 +160,14 @@ async function getRetriever(query: string, modelName: Model, llm: ChatOllama) {
   });
 
   // Retrieve the vector store
-  const { embeddings } = await initialiseVectorStore(modelName);
+  const { embeddings } = await initialiseVectorStore();
 
   let vectorStore;
   let combineDocsChains;
 
   if (response.content === "Image Lookup") {
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
-      collectionName:
-        "images-" +
-        (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
+      collectionName: "images",
       url: process.env.CHROMA_DB_URL!,
     });
     combineDocsChains = await createStuffDocumentsChain({
@@ -191,13 +181,13 @@ async function getRetriever(query: string, modelName: Model, llm: ChatOllama) {
         page content: {page_content}`,
       }),
     });
-  } else if (response.content === "Describe Image") {
-    return { vectorStore, combineDocsChains };
-  } else {
+  }
+  // else if (response.content === "Describe Image") {
+  //   return { vectorStore: null, combineDocsChains: null };
+  // }
+  else {
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
-      collectionName:
-        "text-" +
-        (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
+      collectionName: "text",
       url: process.env.CHROMA_DB_URL!,
     });
     combineDocsChains = await createStuffDocumentsChain({

@@ -15,7 +15,7 @@ import SendMessageButton from "@/components/send-message-button";
 import TextContainer from "@/components/text-container";
 import { usePlaygroundSettings } from "@/lib/hooks";
 import EmbedFiles from "@/components/embed-files";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Chat() {
   const {
@@ -28,6 +28,7 @@ export default function Chat() {
     setChatFiles,
   } = usePlaygroundSettings();
   const [base64Files, setBase64Files] = useState<string[]>([]);
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
   const {
     messages,
     input,
@@ -76,7 +77,6 @@ export default function Chat() {
     readFiles(chatFiles)
       .then((base64Files) => {
         setBase64Files(base64Files as string[]);
-        console.log(base64Files);
       })
       .catch((error) => {
         toast.warning("Error reading files:", error);
@@ -114,20 +114,25 @@ export default function Chat() {
                 <EmbedFiles />
               </form>
             </div>
-            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-dvh">
+            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-[calc(100dvh-100px)]">
               <MessageContainer messages={messages} />
               <form
-                className="pb-5 relative overflow-hidden rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring"
+                className="pb-5 relative overflow-hidden rounded-lg border focus-within:ring-1 focus-within:ring-ring"
                 onSubmit={handleMessageSubmit}
               >
                 <TextContainer
                   input={input}
                   handleInputChange={handleInputChange}
+                  submitButtonRef={submitButtonRef}
                 />
-                <div className="flex items-center p-3 pt-0">
+                <div className="flex items-center px-3 sticky -bottom-2">
                   <UploadFilesButton />
                   <MicrophoneButton />
-                  <SendMessageButton input={input} isLoading={isLoading} />
+                  <SendMessageButton
+                    input={input}
+                    isLoading={isLoading}
+                    submitButtonRef={submitButtonRef}
+                  />
                 </div>
               </form>
             </div>

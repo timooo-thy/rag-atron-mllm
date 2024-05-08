@@ -4,15 +4,13 @@ import { PineconeStore } from "@langchain/pinecone";
 import initialiseVectorStore from "@/utils/db";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { embedTextSchema } from "@/lib/utils";
-import { ChromaClient } from "chromadb";
-import { TextLoader } from "langchain/document_loaders/fs/text";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   const body = await req.json();
   const result = embedTextSchema.parse(body);
-  const { caseEmbedId, modelName, text } = result;
+  const { caseEmbedId, text } = result;
 
   try {
     const splitter = new RecursiveCharacterTextSplitter({
@@ -27,9 +25,7 @@ export async function POST(req: Request) {
       doc.metadata["caseId"] = caseEmbedId;
     }
 
-    const { embeddings, pineconeIndex } = await initialiseVectorStore(
-      modelName
-    );
+    const { embeddings } = await initialiseVectorStore();
 
     // const client = new ChromaClient({
     //   path: process.env.CHROMA_DB_URL!,
@@ -37,9 +33,7 @@ export async function POST(req: Request) {
     // console.log(await client.listCollections());
 
     await Chroma.fromDocuments(splitDocuments, embeddings, {
-      collectionName:
-        "text-" +
-        (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
+      collectionName: "text",
       url: process.env.CHROMA_DB_URL!,
       collectionMetadata: {
         "hnsw:space": "cosine",

@@ -14,10 +14,9 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   const formData = await req.formData();
   const file: File | null = formData.get("file") as unknown as File;
-  const modelName: Model | null = formData.get("modelName") as unknown as Model;
   const caseId: string | null = formData.get("caseId") as unknown as string;
 
-  if (!file || !modelName || !caseId) {
+  if (!file || !caseId) {
     return NextResponse.json({ error: "No file provided" }, { status: 400 });
   }
 
@@ -80,7 +79,7 @@ export async function POST(req: Request) {
       }),
     ]);
 
-    const { embeddings } = await initialiseVectorStore(modelName);
+    const { embeddings } = await initialiseVectorStore();
 
     // const client = new ChromaClient({
     //   path: process.env.CHROMA_DB_URL!,
@@ -95,9 +94,7 @@ export async function POST(req: Request) {
       [{ id: uuid, url: imageUrl, caseId: parseInt(caseId) }],
       embeddings,
       {
-        collectionName:
-          "images-" +
-          (modelName === "llama3:instruct" ? "llama3-8b" : "llama3-70b"),
+        collectionName: "images",
         url: process.env.CHROMA_DB_URL!,
         collectionMetadata: {
           "hnsw:space": "cosine",

@@ -8,10 +8,10 @@ import { Button } from "./ui/button";
 import { Spinner } from "@nextui-org/spinner";
 import { Label } from "./ui/label";
 import { embedImageSchema, embedTextSchema } from "@/lib/utils";
-import { Paperclip, Trash2, X } from "lucide-react";
+import { Paperclip, Trash2 } from "lucide-react";
 
 export default function EmbedFiles() {
-  const { modelName, caseEmbedId, setCaseEmbedId, file, setFile } =
+  const { caseEmbedId, setCaseEmbedId, file, setFile } =
     usePlaygroundSettings();
 
   const [isLoading, setLoading] = useState(false);
@@ -41,7 +41,6 @@ export default function EmbedFiles() {
           const text = e.target?.result;
           const result = embedTextSchema.safeParse({
             caseEmbedId,
-            modelName,
             text,
           });
 
@@ -74,42 +73,41 @@ export default function EmbedFiles() {
           }
         };
         reader.readAsText(file);
-      }
-      try {
-        const result = embedImageSchema.safeParse({
-          caseEmbedId,
-          modelName,
-          file,
-        });
+      } else {
+        try {
+          const result = embedImageSchema.safeParse({
+            caseEmbedId,
+            file,
+          });
 
-        if (!result.success) {
-          toast.warning(result.error.errors[0].message);
-          return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("caseId", caseEmbedId);
-        formData.append("modelName", result.data.modelName);
-
-        const response = await fetch("/api/ingest/image", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (response.ok) {
-          toast.success("Upload successful!");
-          setFile(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = "";
+          if (!result.success) {
+            toast.warning(result.error.errors[0].message);
+            return;
           }
-        } else {
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("caseId", caseEmbedId);
+
+          const response = await fetch("/api/ingest/image", {
+            method: "POST",
+            body: formData,
+          });
+
+          if (response.ok) {
+            toast.success("Upload successful!");
+            setFile(null);
+            if (fileInputRef.current) {
+              fileInputRef.current.value = "";
+            }
+          } else {
+            toast.error("Failed to upload file. Please try again.");
+          }
+        } catch (error) {
           toast.error("Failed to upload file. Please try again.");
+        } finally {
+          setLoading(false);
         }
-      } catch (error) {
-        toast.error("Failed to upload file. Please try again.");
-      } finally {
-        setLoading(false);
       }
     }
   };

@@ -8,16 +8,18 @@ import { Button } from "./ui/button";
 type TextContainerProps = {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  submitButtonRef: React.RefObject<HTMLButtonElement>;
 };
 
 export default function TextContainer({
   input,
   handleInputChange,
+  submitButtonRef,
 }: TextContainerProps) {
   const { chatFiles, setChatFiles } = usePlaygroundSettings();
 
   return (
-    <>
+    <div>
       {chatFiles.length > 0 && (
         <div className="flex gap-2 items-center pb-2 mx-4 pt-3 border-b-1">
           <ul className="flex gap-2">
@@ -53,9 +55,17 @@ export default function TextContainer({
         id="message"
         value={input}
         onChange={handleInputChange}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            if (submitButtonRef.current) {
+              submitButtonRef.current.click();
+            }
+          }
+        }}
         placeholder="Type your message here..."
         className="min-h-12 resize-none border-0 p-3 shadow-none focus-visible:ring-0"
       />
-    </>
+    </div>
   );
 }
