@@ -75,7 +75,7 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
             )}
             <Markdown
               remarkPlugins={[remarkGfm]}
-              className="mb-10 rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
+              className="mb-10 [&>table]:text-center [&>table>tbody>tr>td>img]:m-auto [&>table>tbody>tr>td]:align-middle [&>table>tbody>tr>td]:m-auto rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
             >
               {m.content}
             </Markdown>
