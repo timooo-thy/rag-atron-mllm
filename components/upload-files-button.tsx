@@ -49,9 +49,10 @@ export default function UploadFilesButton() {
             className="hidden"
             ref={fileInputRef}
             multiple
-            onChange={(e) =>
-              e.target.files && setChatFiles(Array.from(e.target.files))
-            }
+            onChange={(e) => {
+              e.target.files && setChatFiles(Array.from(e.target.files));
+              console.log(e.target.files);
+            }}
           />
         </Button>
       </DropdownMenuContent>

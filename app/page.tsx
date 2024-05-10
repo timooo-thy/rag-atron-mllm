@@ -15,7 +15,7 @@ import SendMessageButton from "@/components/send-message-button";
 import TextContainer from "@/components/text-container";
 import { usePlaygroundSettings } from "@/lib/hooks";
 import EmbedFiles from "@/components/embed-files";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 
 export default function Chat() {
   const {
@@ -27,7 +27,6 @@ export default function Chat() {
     chatFiles,
     setChatFiles,
   } = usePlaygroundSettings();
-  const [base64Files, setBase64Files] = useState<string[]>([]);
   const submitButtonRef = useRef<HTMLButtonElement>(null);
   const {
     messages,
@@ -38,14 +37,6 @@ export default function Chat() {
     isLoading,
   } = useChat({
     api: "/api/chat-rag",
-    body: {
-      caseId: caseId,
-      temperature: temperature,
-      similarity: similarity,
-      context: context,
-      modelName: modelName,
-      chatFilesBase64: base64Files,
-    },
   });
 
   const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -74,14 +65,7 @@ export default function Chat() {
       );
     };
 
-    readFiles(chatFiles)
-      .then((base64Files) => {
-        setBase64Files(base64Files as string[]);
-      })
-      .catch((error) => {
-        toast.warning("Error reading files:", error);
-      });
-
+    const base64Files = await readFiles(chatFiles);
     const result = formSchema.safeParse({
       caseId,
       temperature,
@@ -95,8 +79,18 @@ export default function Chat() {
       toast.warning(result.error.errors[0].message);
       return;
     }
-    handleSubmit(e);
-    setBase64Files([]);
+    handleSubmit(e, {
+      options: {
+        body: {
+          caseId: caseId,
+          temperature: temperature,
+          similarity: similarity,
+          context: context,
+          modelName: modelName,
+          chatFilesBase64: base64Files,
+        },
+      },
+    });
     setChatFiles([]);
   };
 
@@ -105,8 +99,8 @@ export default function Chat() {
       <TooltipProvider>
         <SideNav />
         <MobileDrawer setInput={setInput} />
-        <div className="flex flex-col m-auto md:w-[95%] lg:w-[75%] w-full">
-          <main className="grid flex-1 gap-4 overflow-auto p-4 md:grid-cols-3">
+        <div className="flex flex-col m-auto lg:w-[80%]">
+          <main className="grid grid-cols-1 gap-4 overflow-auto p-4 md:grid-cols-3">
             <div className="relative hidden flex-col items-start gap-8 md:flex">
               <form className="grid w-full items-start gap-6">
                 <Settings />

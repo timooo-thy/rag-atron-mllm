@@ -61,11 +61,10 @@ export async function POST(req: Request) {
 
     // Fetch image from s3 and convert to ArrayBuffer
     const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;
-
     // Describe image using llava:13b model
     const llm = new ChatOllama({
       model: "llava:13b",
-      temperature: 0.5,
+      temperature: 0.6,
     });
 
     const res = await llm.invoke([
@@ -73,7 +72,7 @@ export async function POST(req: Request) {
         content: [
           {
             type: "text",
-            text: "Describe this image succinctly under 30 words to be used as a search query in a vector database.",
+            text: "Describe this image succinctly while being descriptive under 30 words to be used as a search query in a vector database.",
           },
           {
             type: "image_url",
@@ -85,6 +84,7 @@ export async function POST(req: Request) {
 
     const { embeddings } = await initialiseVectorStore();
 
+    // Manual deleting of collection
     // const client = new ChromaClient({
     //   path: process.env.CHROMA_DB_URL!,
     // });

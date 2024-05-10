@@ -18,7 +18,7 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
   }, [messages]);
 
   return (
-    <div className="flex flex-col overflow-y-auto md:px-4 md:pt-8 pt-4 px-2 pb-0 w-full h-full">
+    <div className="flex flex-col overflow-y-auto md:px-4 md:pt-8 pt-4 px-2 pb-0 h-full w-full">
       {messages.length > 0 ? (
         messages.map((m) => (
           <div key={m.id} className="prose !max-w-full px-4">

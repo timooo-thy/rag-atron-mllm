@@ -83,12 +83,14 @@ export async function POST(req: Request) {
   });
 
   if (chatFilesBase64 && chatFilesBase64.length > 0) {
+    console.log("Describe Image with LLaVa");
+
     let content: Content[] = [
       {
         type: "text",
-        text: `Describe each image succinctly to be used as exhibit captioning. 
-        Return in markdown table format with exhibition names and descriptions. 
-        Each image has one name and description.
+        text: `For each image, describe the image with details to be used as exhibit captioning. 
+        Use markdown table format with exhibition names and descriptions. 
+        Each row in the table tallies to one image with its own description.
         User Query: ${currentMessageContent}`,
       },
     ];
