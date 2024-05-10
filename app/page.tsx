@@ -99,7 +99,7 @@ export default function Chat() {
       <TooltipProvider>
         <SideNav />
         <MobileDrawer setInput={setInput} />
-        <div className="flex flex-col m-auto lg:w-[80%]">
+        <div className="flex flex-col m-auto lg:w-[80%] w-full">
           <main className="grid grid-cols-1 gap-4 overflow-auto p-4 md:grid-cols-3">
             <div className="relative hidden flex-col items-start gap-8 md:flex">
               <form className="grid w-full items-start gap-6">

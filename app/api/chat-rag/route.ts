@@ -83,15 +83,19 @@ export async function POST(req: Request) {
   });
 
   if (chatFilesBase64 && chatFilesBase64.length > 0) {
-    console.log("Describe Image with LLaVa");
+    console.log(
+      `Describe Images with LLaVa, total of ${chatFilesBase64.length} images.`
+    );
 
     let content: Content[] = [
       {
         type: "text",
-        text: `For each image, describe the image with details to be used as exhibit captioning. 
-        Use markdown table format with exhibition names and descriptions. 
+        text: `There are ${chatFilesBase64.length} images. 
+        Describe each image in detail to be used as exhibit captioning for a narcotics team. 
+        Use markdown table format (no spaces) columns: 'Exhibition Names', 'Description'. 
         Each row in the table tallies to one image with its own description.
-        User Query: ${currentMessageContent}`,
+        Ensure there are the same number of rows as images excluding headers.
+        User Query: ${typedMessages[typedMessages.length - 1].content}`,
       },
     ];
 
