@@ -1,4 +1,4 @@
-import { Bird, Rabbit, SettingsIcon, Turtle } from "lucide-react";
+import { SettingsIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import {
   Drawer,
@@ -9,19 +9,6 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from "./ui/drawer";
-import { Label } from "./ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Input } from "./ui/input";
-import { Slider } from "./ui/slider";
-import React from "react";
-import { usePlaygroundSettings } from "@/lib/hooks";
-import { Model } from "@/lib/type";
 import Settings from "./settings";
 import EmbedFiles from "./embed-files";
 
@@ -30,18 +17,6 @@ type MobileDrawerProps = {
 };
 
 export default function MobileDrawer({ setInput }: MobileDrawerProps) {
-  const {
-    caseId,
-    setCaseId,
-    similarity,
-    setSimilarity,
-    context,
-    setContext,
-    temperature,
-    setTemperature,
-    setModelName,
-  } = usePlaygroundSettings();
-
   return (
     <header className="sticky top-0 z-10 flex h-[53px] items-center gap-1 border-b px-4  backdrop-blur-sm">
       <h1 className="text-xl font-semibold">NarcoNet AI</h1>

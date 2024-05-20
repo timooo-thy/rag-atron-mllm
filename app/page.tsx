@@ -42,10 +42,10 @@ export default function Chat() {
   const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const readFiles = (files: File[]) => {
+    const readFiles = (files: File[]): Promise<string[]> => {
       return Promise.all(
         files.map((file) => {
-          return new Promise((resolve, reject) => {
+          return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
             reader.onload = (e) => {
               if (
