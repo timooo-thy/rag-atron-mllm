@@ -23,6 +23,7 @@ export default function Settings() {
     setContext,
     temperature,
     setTemperature,
+    modelName,
     setModelName,
   } = usePlaygroundSettings();
 
@@ -35,6 +36,7 @@ export default function Settings() {
           onValueChange={(value) => {
             setModelName(value as Model);
           }}
+          value={modelName as Model}
         >
           <SelectTrigger
             id="model"
