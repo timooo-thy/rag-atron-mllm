@@ -16,6 +16,7 @@ import TextContainer from "@/components/text-container";
 import { usePlaygroundSettings } from "@/lib/hooks";
 import EmbedFiles from "@/components/embed-files";
 import { useRef } from "react";
+import { encode } from "base64-arraybuffer";
 
 export default function Chat() {
   const {
@@ -47,25 +48,68 @@ export default function Chat() {
         files.map((file) => {
           return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
+
             reader.onload = (e) => {
-              if (
-                e.target &&
-                e.target.result &&
-                typeof e.target.result === "string"
-              ) {
-                resolve(e.target.result);
+              if (e.target && e.target.result) {
+                // Convert the ArrayBuffer from readAsArrayBuffer to a Base64 string
+                if (
+                  file.type.match("audio/*") &&
+                  e.target.result instanceof ArrayBuffer
+                ) {
+                  const base64String = encode(e.target.result);
+                  resolve(base64String);
+                } else {
+                  resolve(e.target.result as string);
+                }
               } else {
                 reject(new Error("Failed to read file"));
               }
             };
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
+
+            reader.onerror = (error) =>
+              reject(new Error("Error reading file: " + error));
+
+            if (file.type.match("audio/*")) {
+              reader.readAsArrayBuffer(file);
+            } else if (file.type.match("image/*")) {
+              reader.readAsDataURL(file);
+            } else {
+              reject(new Error("Unsupported file type"));
+            }
           });
         })
       );
     };
 
     const base64Files = await readFiles(chatFiles);
+
+    const allFilesAreAudioOrImage = (files: File[]) => {
+      // Determine if the first file is image or audio
+      const isImage = files[0].type.startsWith("image/");
+      const isAudio = files[0].type.startsWith("audio/");
+
+      return files.every((file) => {
+        return (
+          (isImage && file.type.startsWith("image/")) ||
+          (isAudio && file.type.startsWith("audio/"))
+        );
+      });
+    };
+
+    if (!allFilesAreAudioOrImage(chatFiles)) {
+      toast.warning("Mix of audio and image files are not supported");
+      return;
+    }
+
+    const checkFileType = (files: File[]) => {
+      if (files.length === 0) {
+        return null;
+      }
+      return files[0].type.startsWith("image/") ? "image" : "audio";
+    };
+
+    const fileType = checkFileType(chatFiles);
+
     const result = formSchema.safeParse({
       caseId,
       temperature,
@@ -73,12 +117,14 @@ export default function Chat() {
       context,
       modelName,
       base64Files,
+      fileType,
     });
 
     if (!result.success) {
       toast.warning(result.error.errors[0].message);
       return;
     }
+
     handleSubmit(e, {
       options: {
         body: {
@@ -88,6 +134,7 @@ export default function Chat() {
           context: context,
           modelName: modelName,
           chatFilesBase64: base64Files,
+          fileType: fileType,
         },
       },
     });

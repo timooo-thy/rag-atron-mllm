@@ -6,7 +6,6 @@ import { HumanMessage } from "@langchain/core/messages";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { ChromaClient } from "chromadb";
 import sharp from "sharp";
 
 export const dynamic = "force-dynamic";

@@ -19,6 +19,8 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
+import OpenAI from "openai";
+import { toFile } from "openai/uploads";
 
 export const dynamic = "force-dynamic";
 
@@ -53,7 +55,9 @@ export async function POST(req: Request) {
     context,
     modelName,
     chatFilesBase64,
+    fileType,
   } = result;
+
   const typedMessages = messages as VercelChatMessage[];
 
   const formattedPreviousMessages = typedMessages
@@ -81,8 +85,31 @@ export async function POST(req: Request) {
     model: modelName,
     temperature: temperature,
   });
+  if (fileType === "audio" && chatFilesBase64 && chatFilesBase64.length > 0) {
+    const openai = new OpenAI();
+    let responses = [];
 
-  if (chatFilesBase64 && chatFilesBase64.length > 0) {
+    for (const data of chatFilesBase64) {
+      //convert base64 to array buffer back to file
+      const bufferData = await toFile(Buffer.from(data, "base64"), "audio.mp3");
+
+      const transcription = await openai.audio.transcriptions.create({
+        file: bufferData,
+        model: "whisper-1",
+      });
+
+      responses.push(transcription.text);
+    }
+
+    llm.invoke(
+      `There are ${responses.length} audio clips. Repeat the exact audio transcriptions in text format and label each clip.` +
+        responses
+    );
+  } else if (
+    fileType === "image" &&
+    chatFilesBase64 &&
+    chatFilesBase64.length > 0
+  ) {
     console.log(
       `Describe Images with LLaVa, total of ${chatFilesBase64.length} images.`
     );
@@ -148,6 +175,16 @@ export async function POST(req: Request) {
       input: currentMessageContent,
       case_id: caseId,
     });
+
+    // const retrievedDocuments = [];
+
+    // for await (const chunk of result) {
+    //   if (chunk.context) {
+    //     retrievedDocuments.push(...chunk.context);
+    //   }
+    // }
+
+    // console.log(retrievedDocuments);
   }
 
   return new StreamingTextResponse(stream);
@@ -187,11 +224,7 @@ async function getRetriever(query: string, llm: ChatOllama) {
         page content: {page_content}`,
       }),
     });
-  }
-  // else if (response.content === "Describe Image") {
-  //   return { vectorStore: null, combineDocsChains: null };
-  // }
-  else {
+  } else {
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
       collectionName: "text",
       url: process.env.CHROMA_DB_URL!,
@@ -200,6 +233,12 @@ async function getRetriever(query: string, llm: ChatOllama) {
       llm: llm,
       prompt: QNA_PROMPT,
       documentSeparator: "\n-----------\n",
+      documentPrompt: new PromptTemplate({
+        inputVariables: ["caseId", "url", "page_content"],
+        template: `caseId: {caseId}
+        url: {url} 
+        page content: {page_content}`,
+      }),
     });
   }
   return { vectorStore, combineDocsChains };

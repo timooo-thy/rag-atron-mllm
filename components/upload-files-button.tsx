@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import { useRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,14 +44,13 @@ export default function UploadFilesButton() {
           <FileText className="h-5 w-5" />
           <Input
             type="file"
-            accept="image/png, image/jpeg"
+            accept="image/png, image/jpeg, audio/mpeg"
             name="fileInput"
             className="hidden"
             ref={fileInputRef}
             multiple
             onChange={(e) => {
               e.target.files && setChatFiles(Array.from(e.target.files));
-              console.log(e.target.files);
             }}
           />
         </Button>

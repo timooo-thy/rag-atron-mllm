@@ -11,7 +11,7 @@ const QNA_PROMPT = ChatPromptTemplate.fromMessages([
       "This includes assessing the data’s relevance to ongoing investigations, focusing on potential leads, and aiding in the accumulation of evidence to support law enforcement activities.\n\n" +
       "Only use the following context as data source:\n\nContext:\n {context} \n" +
       "If context is blank: 'Reply with No relevant context found with the Case ID specified. Please try again.'\n\n" +
-      "If context is not blank, strictly adhere your answer in markdown format with no additional text after it.\n---\nAnalysis: Analyse the context if available\nReferences: ONLY indicate the message, time and date of the sources relevant to the question in markdown table format.\n---\n<|eot_id|>",
+      "If context is not blank, strictly adhere your answer in markdown format with no additional text after it.\n---\nAnalysis: Analyse the context if available\nReferences: ONLY indicate the message, time and date of the sources relevant to the question in markdown table format.\n---\n Include the link of the URL at the end of the message.<|eot_id|>",
   ],
   new MessagesPlaceholder("chat_history"),
   [
