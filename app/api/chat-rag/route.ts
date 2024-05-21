@@ -85,6 +85,7 @@ export async function POST(req: Request) {
     model: modelName,
     temperature: temperature,
   });
+
   if (fileType === "audio" && chatFilesBase64 && chatFilesBase64.length > 0) {
     const openai = new OpenAI();
     let responses = [];

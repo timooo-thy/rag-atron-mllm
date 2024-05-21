@@ -133,7 +133,7 @@ export default function EmbedFiles() {
           <Paperclip className="size-4" />
           <Input
             type="file"
-            accept="text/plain, .txt, text/rtf, image/png, image/jpeg"
+            accept="text/plain, .txt, text/rtf, image/png, image/jpeg, audio/mpeg"
             name="fileInput"
             ref={fileInputRef}
             onChange={(e) => setFile(e.target.files && e.target.files[0])}

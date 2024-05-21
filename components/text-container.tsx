@@ -21,7 +21,7 @@ export default function TextContainer({
   return (
     <div>
       {chatFiles.length > 0 && (
-        <div className="flex gap-2 items-center pb-2 mx-4 pt-3 border-b-1">
+        <div className="flex gap-2 items-center pb-2 mx-4 pt-3 border-b-1 overflow-x-auto">
           <ul className="flex gap-2">
             {chatFiles.map((file) => (
               <li
