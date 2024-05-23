@@ -40,7 +40,7 @@ export default function UploadFilesButton() {
           className="bg-transparent flex justify-between gap-x-1 text-black hover:bg-gray-100 w-full"
           onClick={handleFileInputClick}
         >
-          <span>Image(s)</span>
+          <span>Image/Audio</span>
           <FileText className="h-5 w-5" />
           <Input
             type="file"

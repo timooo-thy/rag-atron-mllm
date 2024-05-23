@@ -53,7 +53,7 @@ export default function Chat() {
               if (e.target && e.target.result) {
                 // Convert the ArrayBuffer from readAsArrayBuffer to a Base64 string
                 if (
-                  file.type.match("audio/*") &&
+                  file.type.match("audio/mpeg") &&
                   e.target.result instanceof ArrayBuffer
                 ) {
                   const base64String = encode(e.target.result);
@@ -69,7 +69,7 @@ export default function Chat() {
             reader.onerror = (error) =>
               reject(new Error("Error reading file: " + error));
 
-            if (file.type.match("audio/*")) {
+            if (file.type.match("audio/mpeg")) {
               reader.readAsArrayBuffer(file);
             } else if (file.type.match("image/*")) {
               reader.readAsDataURL(file);
@@ -84,6 +84,9 @@ export default function Chat() {
     const base64Files = await readFiles(chatFiles);
 
     const allFilesAreAudioOrImage = (files: File[]) => {
+      if (files.length === 0) {
+        return true;
+      }
       // Determine if the first file is image or audio
       const isImage = files[0].type.startsWith("image/");
       const isAudio = files[0].type.startsWith("audio/");

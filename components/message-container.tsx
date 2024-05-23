@@ -82,8 +82,9 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
           </div>
         ))
       ) : (
-        <div className="flex justify-center items-center h-full font-semibold">
-          <p>Upload a conversation first!</p>
+        <div className="flex justify-center flex-col items-center h-full font-semibold">
+          <p>How can I assist you?</p>
+          <p>Send a message to get started!</p>
         </div>
       )}
       <div ref={endOfMessagesRef} />

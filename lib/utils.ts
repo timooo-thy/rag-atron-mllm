@@ -25,7 +25,7 @@ export const formSchema = z
       message: "Please select a model.",
     }),
     chatFilesBase64: z.array(z.string()).optional(),
-    fileType: z.enum(["image", "audio"]).optional(),
+    fileType: z.enum(["image", "audio"]).nullable(),
   })
   .passthrough();
 
