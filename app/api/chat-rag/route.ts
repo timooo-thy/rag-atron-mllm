@@ -94,14 +94,6 @@ export async function POST(req: Request) {
     for (const data of chatFilesBase64) {
       //convert base64 to array buffer back to file
       const bufferData = await toFile(Buffer.from(data, "base64"), "audio.mp3");
-      //play audio
-      const data1 = Buffer.from(data, "base64");
-      console.log(data1);
-
-      fs.writeFileSync(
-        "/home/user/timothy/htx/app/api/chat-rag/audio.mp3",
-        data1
-      );
 
       const transcription = await openai.audio.transcriptions.create({
         file: bufferData,
@@ -110,7 +102,6 @@ export async function POST(req: Request) {
       });
 
       console.log(transcription.text);
-
       responses.push(transcription.text);
     }
 
