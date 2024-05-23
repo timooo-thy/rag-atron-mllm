@@ -51,7 +51,7 @@ export default function Settings() {
                 <div className="grid gap-0.5">
                   <p>
                     <span className="font-medium text-foreground">Llama3:</span>{" "}
-                    8b-Instruct
+                    8b
                   </p>
                   <p className="text-xs" data-description>
                     Our fastest model for general use cases.
