@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     }
 
     llm.invoke(
-      `There is/are ${responses.length} audio clips. Repeat the exact full audio transcriptions in text format and label each clip if more than 1. If transcription is empty, ask user to retry.` +
+      `There is/are ${responses.length} audio clips. Repeat the exact full audio transcriptions in text format and label each clip if more than 1. If transcription is empty, ask user to retry. Transcriptions:` +
         responses
     );
   } else if (
@@ -117,6 +117,8 @@ export async function POST(req: Request) {
     console.log(
       `Describe Images with LLaVa, total of ${chatFilesBase64.length} images.`
     );
+
+    //TODO: Send image to s3 bucket
 
     let content: Content[] = [
       {
