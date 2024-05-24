@@ -42,11 +42,15 @@ const formatMessage = (message: VercelChatMessage) => {
       );
 };
 
-type Content = {
-  type: string;
-  text?: string;
-  image_url?: string;
-};
+type Content =
+  | {
+      type: "text";
+      text: string;
+    }
+  | {
+      type: "image_url";
+      image_url: string;
+    };
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -103,8 +107,6 @@ export async function POST(req: Request) {
         model: "whisper-1",
         language: "en",
       });
-
-      console.log(transcription.text);
       responses.push(transcription.text);
     }
 
@@ -174,7 +176,7 @@ export async function POST(req: Request) {
         type: "text",
         text: `There are ${
           chatFilesBase64.length
-        } images. The URLs of the image in order is: ${imageUrls},
+        } images. The URLs of the image in order is: ${imageUrls}.
         Describe each image in detail to be used as exhibit captioning for a narcotics team. 
         Use markdown table format (no spaces) columns: 'Exhibition Image', 'Description'. 
         Display the identified images in order of the URLs given (![image_title](URL)) in proper markdown.
@@ -184,14 +186,12 @@ export async function POST(req: Request) {
       },
     ];
 
-    chatFilesBase64.map((url) => {
+    chatFilesBase64.forEach((url) => {
       content.push({
         type: "image_url",
         image_url: url,
       });
     });
-
-    console.log(content);
 
     llm.invoke([
       new HumanMessage({
