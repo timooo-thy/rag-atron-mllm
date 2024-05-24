@@ -169,7 +169,9 @@ export async function POST(req: Request) {
       return imageUrls;
     };
 
-    const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
+    const imageUrls = (
+      await uploadImagesAndGenerateUrls(chatFilesBase64)
+    ).reverse();
 
     let content: Content[] = [
       {
@@ -192,7 +194,7 @@ export async function POST(req: Request) {
         image_url: url,
       });
     });
-
+    console.log("here");
     llm.invoke([
       new HumanMessage({
         content: content,
