@@ -21,7 +21,7 @@ export default function SendMessageButton({
       ref={submitButtonRef}
       className={`ml-auto gap-1.5 w-[130px] bg-primary hover:opacity-80 hover:bg-primary ${
         input === "" || isLoading
-          ? "cursor-not-allowed bg-primary/40 transition hover:bg-primary/40 hover:opacity-100"
+          ? "disabled cursor-not-allowed bg-primary/40 transition hover:bg-primary/40 hover:opacity-100"
           : ""
       }`}
     >
