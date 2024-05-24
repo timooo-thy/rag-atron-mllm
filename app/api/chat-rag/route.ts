@@ -21,7 +21,10 @@ import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
-import fs from "fs";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { v4 as uuidv4 } from "uuid";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sharp from "sharp";
 
 export const dynamic = "force-dynamic";
 
@@ -118,14 +121,63 @@ export async function POST(req: Request) {
       `Describe Images with LLaVa, total of ${chatFilesBase64.length} images.`
     );
 
-    //TODO: Send image to s3 bucket
+    const s3Client = new S3Client({
+      region: process.env.AWS_REGION!,
+      credentials: {
+        accessKeyId: process.env.AWS_BUCKET_ACCESS_KEY!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      },
+    });
+
+    const uploadImagesAndGenerateUrls = async (chatFilesBase64: string[]) => {
+      const imageUrls: string[] = [];
+      const uploadPromises = chatFilesBase64.map(async (file) => {
+        try {
+          const uuid = uuidv4();
+          const buffer = Buffer.from(file.split(",")[1], "base64");
+          const resizedFile = await sharp(buffer).resize(200).toBuffer();
+
+          const putObjectCommand = new PutObjectCommand({
+            Bucket: process.env.AWS_BUCKET_NAME!,
+            Key: uuid,
+            Body: resizedFile,
+          });
+
+          const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+            expiresIn: 60,
+          });
+
+          await fetch(signedURL, {
+            method: "PUT",
+            body: resizedFile,
+            headers: {
+              "Content-Type": "image/jpeg",
+            },
+          });
+
+          imageUrls.push(
+            `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`
+          );
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      await Promise.all(uploadPromises);
+      return imageUrls;
+    };
+
+    const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
 
     let content: Content[] = [
       {
         type: "text",
-        text: `There are ${chatFilesBase64.length} images. 
+        text: `There are ${
+          chatFilesBase64.length
+        } images. The URLs of the image in order is: ${imageUrls},
         Describe each image in detail to be used as exhibit captioning for a narcotics team. 
-        Use markdown table format (no spaces) columns: 'Exhibition Names', 'Description'. 
+        Use markdown table format (no spaces) columns: 'Exhibition Image', 'Description'. 
+        Display the identified images in order of the URLs given (![image_title](URL)) in proper markdown.
         Each row in the table tallies to one image with its own description.
         Ensure there are the same number of rows as images excluding headers.
         User Query: ${typedMessages[typedMessages.length - 1].content}`,
@@ -138,6 +190,8 @@ export async function POST(req: Request) {
         image_url: url,
       });
     });
+
+    console.log(content);
 
     llm.invoke([
       new HumanMessage({
@@ -181,16 +235,6 @@ export async function POST(req: Request) {
       input: currentMessageContent,
       case_id: caseId,
     });
-
-    // const retrievedDocuments = [];
-
-    // for await (const chunk of result) {
-    //   if (chunk.context) {
-    //     retrievedDocuments.push(...chunk.context);
-    //   }
-    // }
-
-    // console.log(retrievedDocuments);
   }
 
   return new StreamingTextResponse(stream);
