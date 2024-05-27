@@ -42,16 +42,6 @@ const formatMessage = (message: VercelChatMessage) => {
       );
 };
 
-type Content =
-  | {
-      type: "text";
-      text: string;
-    }
-  | {
-      type: "image_url";
-      image_url: string;
-    };
-
 export async function POST(req: Request) {
   const body = await req.json();
   const result = formSchema.parse(body);
@@ -132,8 +122,7 @@ export async function POST(req: Request) {
     });
 
     const uploadImagesAndGenerateUrls = async (chatFilesBase64: string[]) => {
-      const imageUrls: string[] = [];
-      const uploadPromises = chatFilesBase64.map(async (file) => {
+      const uploadPromises = chatFilesBase64.map(async (file, index) => {
         try {
           const uuid = uuidv4();
           const buffer = Buffer.from(file.split(",")[1], "base64");
@@ -157,49 +146,46 @@ export async function POST(req: Request) {
             },
           });
 
-          imageUrls.push(
-            `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`
-          );
+          return {
+            index,
+            url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`,
+          };
         } catch (error) {
           console.error(error);
+          return { index, url: null };
         }
       });
 
-      await Promise.all(uploadPromises);
+      const results = await Promise.all(uploadPromises);
+      results.sort((a, b) => a.index - b.index);
+
+      const imageUrls = results.map((result) => result.url);
       return imageUrls;
     };
 
-    const imageUrls = (
-      await uploadImagesAndGenerateUrls(chatFilesBase64)
-    ).reverse();
+    const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
 
-    let content: Content[] = [
-      {
-        type: "text",
-        text: `There are ${
-          chatFilesBase64.length
-        } images. The URLs of the image in order is: ${imageUrls}.
-        Describe each image in detail to be used as exhibit captioning for a narcotics team. 
-        Use markdown table format (no spaces) columns: 'Exhibition Image', 'Description'. 
-        Display the identified images in order of the URLs given (![image_title](URL)) in proper markdown.
-        Each row in the table tallies to one image with its own description.
-        Ensure there are the same number of rows as images excluding headers.
-        User Query: ${typedMessages[typedMessages.length - 1].content}`,
-      },
-    ];
+    const prompt = [];
 
-    chatFilesBase64.forEach((url) => {
-      content.push({
-        type: "image_url",
-        image_url: url,
-      });
-    });
-    console.log("here");
-    llm.invoke([
-      new HumanMessage({
-        content: content,
-      }),
-    ]);
+    for (let i = 0; i < chatFilesBase64.length; i++) {
+      prompt.push([
+        new HumanMessage({
+          content: [
+            {
+              type: "text",
+              text: `Describe this image under 30 words to be used as exhibit captioning for a narcotics team. Use markdown table format (no spaces) into 2 columns: 'Exhibition Image', 'Description'. Under the Exhibition Image, use this URL: ${
+                imageUrls[i]
+              } to display the image via (![image_title](URL)). User's query: ${
+                typedMessages[typedMessages.length - 1].content
+              }`,
+            },
+            { type: "image_url", image_url: chatFilesBase64[i] },
+          ],
+        }),
+      ]);
+    }
+
+    llm.batch(prompt);
   } else {
     const { vectorStore, combineDocsChains } = await getRetriever(
       currentMessageContent,
