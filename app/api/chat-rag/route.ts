@@ -8,12 +8,15 @@ import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
-import { AIMessage, HumanMessage } from "@langchain/core/messages";
+import {
+  AIMessage,
+  HumanMessage,
+  MessageContent,
+} from "@langchain/core/messages";
 import {
   REPHRASE_PROMPT,
-  QNA_PROMPT,
-  RETRIEVER_PROMPT,
   IMAGE_PROMPT,
+  IMAGE_CLASSIFIER_PROMPT,
 } from "@/utils/prompt-templates";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
@@ -25,6 +28,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
+import { getRetriever } from "@/lib/rag-functions";
 
 export const dynamic = "force-dynamic";
 
@@ -64,17 +68,13 @@ export async function POST(req: Request) {
   // Get the latest k buffer window (memory)
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
-  const currentMessageContent =
-    "<|start_header_id|>user<|end_header_id|>" +
-    typedMessages[typedMessages.length - 1].content +
-    "<|eot_id|>";
+  const currentMessageContent = typedMessages[typedMessages.length - 1].content;
 
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
 
   const llm = new ChatOllama({
-    model:
-      chatFilesBase64 && chatFilesBase64.length > 0 ? "llava:13b" : modelName,
+    model: modelName,
     callbacks: [handlers],
     temperature: temperature,
   });
@@ -83,6 +83,9 @@ export async function POST(req: Request) {
     model: modelName,
     temperature: temperature,
   });
+
+  let imageToImage = 0;
+  let description: MessageContent = "";
 
   if (fileType === "audio" && chatFilesBase64 && chatFilesBase64.length > 0) {
     const openai = new OpenAI();
@@ -113,85 +116,149 @@ export async function POST(req: Request) {
       `Describe Images with LLaVa, total of ${chatFilesBase64.length} images.`
     );
 
-    const s3Client = new S3Client({
-      region: process.env.AWS_REGION!,
-      credentials: {
-        accessKeyId: process.env.AWS_BUCKET_ACCESS_KEY!,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-      },
+    const retreiverLLM = new ChatOllama({
+      model: "llama3:instruct",
+      temperature: 0,
     });
 
-    const uploadImagesAndGenerateUrls = async (chatFilesBase64: string[]) => {
-      const uploadPromises = chatFilesBase64.map(async (file, index) => {
-        try {
-          const uuid = uuidv4();
-          const buffer = Buffer.from(file.split(",")[1], "base64");
-          const resizedFile = await sharp(buffer).resize(200).toBuffer();
+    const selectRetrieverChain = IMAGE_CLASSIFIER_PROMPT.pipe(retreiverLLM);
 
-          const putObjectCommand = new PutObjectCommand({
-            Bucket: process.env.AWS_BUCKET_NAME!,
-            Key: uuid,
-            Body: resizedFile,
-          });
+    const response = await selectRetrieverChain.invoke({
+      query: currentMessageContent,
+    });
 
-          const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-            expiresIn: 60,
-          });
+    if (response.content === "Image Lookup") {
+      imageToImage = 1;
 
-          await fetch(signedURL, {
-            method: "PUT",
-            body: resizedFile,
-            headers: {
-              "Content-Type": "image/jpeg",
-            },
-          });
-
-          return {
-            index,
-            url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`,
-          };
-        } catch (error) {
-          console.error(error);
-          return { index, url: null };
-        }
+      const describerLLM = new ChatOllama({
+        model: "llava:13b",
+        temperature: 0.6,
       });
 
-      const results = await Promise.all(uploadPromises);
-      results.sort((a, b) => a.index - b.index);
-
-      const imageUrls = results.map((result) => result.url);
-      return imageUrls;
-    };
-
-    const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
-
-    const prompt = [];
-
-    for (let i = 0; i < chatFilesBase64.length; i++) {
-      prompt.push([
+      const response = await describerLLM.invoke([
         new HumanMessage({
           content: [
             {
               type: "text",
-              text: `Describe this image under 30 words to be used as exhibit captioning for a narcotics team. Use markdown table format (no spaces) into 2 columns: 'Exhibition Image', 'Description'. Under the Exhibition Image, use this URL: ${
-                imageUrls[i]
-              } to display the image via (![image_title](URL)). User's query: ${
-                typedMessages[typedMessages.length - 1].content
-              }`,
+              text: `Describe this image succinctly while being descriptive under 30 words to be used as a search query in a vector database.`,
             },
-            { type: "image_url", image_url: chatFilesBase64[i] },
+            { type: "image_url", image_url: chatFilesBase64[0] },
           ],
         }),
       ]);
+
+      description = response.content;
+
+      console.log(description);
+    } else {
+      const s3Client = new S3Client({
+        region: process.env.AWS_REGION!,
+        credentials: {
+          accessKeyId: process.env.AWS_BUCKET_ACCESS_KEY!,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+        },
+      });
+
+      const uploadImagesAndGenerateUrls = async (chatFilesBase64: string[]) => {
+        const uploadPromises = chatFilesBase64.map(async (file, index) => {
+          try {
+            const uuid = uuidv4();
+            const buffer = Buffer.from(file.split(",")[1], "base64");
+            const resizedFile = await sharp(buffer).resize(200).toBuffer();
+
+            const putObjectCommand = new PutObjectCommand({
+              Bucket: process.env.AWS_BUCKET_NAME!,
+              Key: uuid,
+              Body: resizedFile,
+            });
+
+            const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+              expiresIn: 60,
+            });
+
+            await fetch(signedURL, {
+              method: "PUT",
+              body: resizedFile,
+              headers: {
+                "Content-Type": "image/jpeg",
+              },
+            });
+
+            return {
+              index,
+              url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`,
+            };
+          } catch (error) {
+            console.error(error);
+            return { index, url: null };
+          }
+        });
+
+        const results = await Promise.all(uploadPromises);
+        results.sort((a, b) => a.index - b.index);
+
+        const imageUrls = results.map((result) => result.url);
+        return imageUrls;
+      };
+
+      const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
+
+      const prompt = [];
+
+      for (let i = 0; i < chatFilesBase64.length; i++) {
+        prompt.push([
+          new HumanMessage({
+            content: [
+              {
+                type: "text",
+                text: `Describe this image under 30 words to be used as exhibit captioning for a narcotics team. Use markdown table format (no spaces) into 2 columns: 'Exhibition Image', 'Description'. Under the Exhibition Image, use this URL: ${imageUrls[i]} to display the image via (![image_title](URL)). User's query: ${currentMessageContent}`,
+              },
+              { type: "image_url", image_url: chatFilesBase64[i] },
+            ],
+          }),
+        ]);
+      }
+
+      const llava_llm = new ChatOllama({
+        model: "llava:13b",
+        callbacks: [handlers],
+        temperature: temperature,
+      });
+
+      llava_llm.batch(prompt);
     }
+  }
 
-    llm.batch(prompt);
-  } else {
-    const { vectorStore, combineDocsChains } = await getRetriever(
-      currentMessageContent,
-      llm
-    );
+  if (imageToImage || !fileType) {
+    let vectorStore;
+    let combineDocsChains;
 
+    if (imageToImage) {
+      // Retrieve the vector store
+      const { embeddings } = await initialiseVectorStore();
+
+      vectorStore = await Chroma.fromExistingCollection(embeddings, {
+        collectionName: "images",
+        url: process.env.CHROMA_DB_URL!,
+      });
+
+      combineDocsChains = await createStuffDocumentsChain({
+        llm: llm,
+        prompt: IMAGE_PROMPT,
+        documentSeparator: "\n-----------\n",
+        documentPrompt: new PromptTemplate({
+          inputVariables: ["caseId", "url", "page_content"],
+          template: `caseId: {caseId}
+          url: {url} 
+          page content: {page_content}`,
+        }),
+      });
+    } else {
+      ({ vectorStore, combineDocsChains } = await getRetriever(
+        currentMessageContent,
+        llm
+      ));
+    }
     const retriever = vectorStore.asRetriever({
       k: similarity,
       filter: { caseId: caseId },
@@ -220,64 +287,13 @@ export async function POST(req: Request) {
     // Invoke the chain and stream response back
     retrieverChain.invoke({
       chat_history: latestKBufferWindow,
-      input: currentMessageContent,
+      input:
+        description !== ""
+          ? " Description of image to lookup: " + description + "<|eot_id|>"
+          : currentMessageContent,
       case_id: caseId,
     });
   }
 
   return new StreamingTextResponse(stream);
-}
-
-async function getRetriever(query: string, llm: ChatOllama) {
-  const retreiverLLM = new ChatOllama({
-    model: "llama3:instruct",
-    temperature: 0,
-  });
-
-  const selectRetrieverChain = RETRIEVER_PROMPT.pipe(retreiverLLM);
-
-  const response = await selectRetrieverChain.invoke({
-    query: query,
-  });
-
-  // Retrieve the vector store
-  const { embeddings } = await initialiseVectorStore();
-
-  let vectorStore;
-  let combineDocsChains;
-
-  if (response.content === "Image Lookup") {
-    vectorStore = await Chroma.fromExistingCollection(embeddings, {
-      collectionName: "images",
-      url: process.env.CHROMA_DB_URL!,
-    });
-    combineDocsChains = await createStuffDocumentsChain({
-      llm: llm,
-      prompt: IMAGE_PROMPT,
-      documentSeparator: "\n-----------\n",
-      documentPrompt: new PromptTemplate({
-        inputVariables: ["caseId", "url", "page_content"],
-        template: `caseId: {caseId}
-        url: {url} 
-        page content: {page_content}`,
-      }),
-    });
-  } else {
-    vectorStore = await Chroma.fromExistingCollection(embeddings, {
-      collectionName: "text",
-      url: process.env.CHROMA_DB_URL!,
-    });
-    combineDocsChains = await createStuffDocumentsChain({
-      llm: llm,
-      prompt: QNA_PROMPT,
-      documentSeparator: "\n-----------\n",
-      documentPrompt: new PromptTemplate({
-        inputVariables: ["caseId", "url", "page_content"],
-        template: `caseId: {caseId}
-        url: {url} 
-        page content: {page_content}`,
-      }),
-    });
-  }
-  return { vectorStore, combineDocsChains };
 }
