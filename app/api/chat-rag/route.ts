@@ -2,6 +2,7 @@ import {
   LangChainStream,
   StreamingTextResponse,
   Message as VercelChatMessage,
+  formatStreamPart,
 } from "ai";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
@@ -67,6 +68,44 @@ export async function POST(req: Request) {
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
   const currentMessageContent = typedMessages[typedMessages.length - 1].content;
+
+  //TODO: Implement video logic
+  // const response = await fetch("http://localhost:8002/predict", {
+  //   method: "POST",
+  //   headers: {
+  //     "Content-Type": "application/json",
+  //   },
+  //   body: JSON.stringify({
+  //     query: "Describe this video",
+  //     video_url:
+  //       "https://htx-test.s3.ap-southeast-1.amazonaws.com/3195394-uhd_3840_2160_25fps.mp4",
+  //   }),
+  // });
+
+  // if (!response.body) {
+  //   throw new Error("No response body from fetch");
+  // }
+
+  // const reader = response.body.getReader();
+  // const decoder = new TextDecoder();
+
+  // const stream = new ReadableStream({
+  //   async start(controller) {
+  //     while (true) {
+  //       const { done, value } = await reader.read();
+  //       if (done) break;
+  //       // Decode the Uint8Array chunk to a string
+  //       const chunk = decoder.decode(value, { stream: true });
+  //       // Text chunks are lines that look like this 0:my-chunk\n hence the need to format
+  //       const formattedChunk = formatStreamPart("text", chunk);
+  //       // Enqueue the chunk to the controller
+  //       controller.enqueue(formattedChunk);
+  //     }
+  //     controller.close();
+  //   },
+  // });
+
+  // return new StreamingTextResponse(stream);
 
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
@@ -201,8 +240,8 @@ export async function POST(req: Request) {
         documentPrompt: new PromptTemplate({
           inputVariables: ["caseId", "url", "page_content"],
           template: `caseId: {caseId}
-          url: {url} 
-          page content: {page_content}`,
+            url: {url}
+            page content: {page_content}`,
         }),
       });
     } else {
