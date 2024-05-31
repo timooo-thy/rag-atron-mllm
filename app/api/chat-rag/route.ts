@@ -19,16 +19,11 @@ import {
   IMAGE_CLASSIFIER_PROMPT,
 } from "@/utils/prompt-templates";
 import { PromptTemplate } from "@langchain/core/prompts";
-import { ScoreThresholdRetriever } from "langchain/retrievers/score_threshold";
 import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { v4 as uuidv4 } from "uuid";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import sharp from "sharp";
-import { getRetriever } from "@/lib/rag-functions";
+import { getRetriever, uploadImagesAndGenerateUrls } from "@/lib/rag-functions";
 
 export const dynamic = "force-dynamic";
 
@@ -48,6 +43,8 @@ const formatMessage = (message: VercelChatMessage) => {
 
 export async function POST(req: Request) {
   const body = await req.json();
+
+  // Destructure and validate the request body
   const result = formSchema.parse(body);
   const {
     messages,
@@ -65,6 +62,7 @@ export async function POST(req: Request) {
   const formattedPreviousMessages = typedMessages
     .slice(0, -1)
     .map(formatMessage);
+
   // Get the latest k buffer window (memory)
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
@@ -73,20 +71,24 @@ export async function POST(req: Request) {
   // Initialise ChatOllama model with stream and handlers
   const { stream, handlers } = LangChainStream();
 
+  // Main LLM
   const llm = new ChatOllama({
     model: modelName,
     callbacks: [handlers],
     temperature: temperature,
   });
 
+  // History Aware LLM
   const rephrasingLLM = new ChatOllama({
     model: modelName,
     temperature: temperature,
   });
 
+  // Flag for image to image query
   let imageToImage = 0;
   let description: MessageContent = "";
 
+  // Audio transcription
   if (fileType === "audio" && chatFilesBase64 && chatFilesBase64.length > 0) {
     const openai = new OpenAI();
     let responses = [];
@@ -148,59 +150,7 @@ export async function POST(req: Request) {
       ]);
 
       description = response.content;
-
-      console.log(description);
     } else {
-      const s3Client = new S3Client({
-        region: process.env.AWS_REGION!,
-        credentials: {
-          accessKeyId: process.env.AWS_BUCKET_ACCESS_KEY!,
-          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-        },
-      });
-
-      const uploadImagesAndGenerateUrls = async (chatFilesBase64: string[]) => {
-        const uploadPromises = chatFilesBase64.map(async (file, index) => {
-          try {
-            const uuid = uuidv4();
-            const buffer = Buffer.from(file.split(",")[1], "base64");
-            const resizedFile = await sharp(buffer).resize(200).toBuffer();
-
-            const putObjectCommand = new PutObjectCommand({
-              Bucket: process.env.AWS_BUCKET_NAME!,
-              Key: uuid,
-              Body: resizedFile,
-            });
-
-            const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-              expiresIn: 60,
-            });
-
-            await fetch(signedURL, {
-              method: "PUT",
-              body: resizedFile,
-              headers: {
-                "Content-Type": "image/jpeg",
-              },
-            });
-
-            return {
-              index,
-              url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`,
-            };
-          } catch (error) {
-            console.error(error);
-            return { index, url: null };
-          }
-        });
-
-        const results = await Promise.all(uploadPromises);
-        results.sort((a, b) => a.index - b.index);
-
-        const imageUrls = results.map((result) => result.url);
-        return imageUrls;
-      };
-
       const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
 
       const prompt = [];
@@ -229,10 +179,12 @@ export async function POST(req: Request) {
     }
   }
 
+  // Image to image query or text query
   if (imageToImage || !fileType) {
     let vectorStore;
     let combineDocsChains;
 
+    // Image to image query
     if (imageToImage) {
       // Retrieve the vector store
       const { embeddings } = await initialiseVectorStore();
@@ -254,11 +206,13 @@ export async function POST(req: Request) {
         }),
       });
     } else {
+      // Text query
       ({ vectorStore, combineDocsChains } = await getRetriever(
         currentMessageContent,
         llm
       ));
     }
+
     const retriever = vectorStore.asRetriever({
       k: similarity,
       filter: { caseId: caseId },
@@ -278,7 +232,7 @@ export async function POST(req: Request) {
       rephrasePrompt: REPHRASE_PROMPT,
     });
 
-    // RAG pipeline
+    // Retriever pipeline
     const retrieverChain = await createRetrievalChain({
       combineDocsChain: combineDocsChains,
       retriever: historyAwareRetrieverChain,
@@ -289,7 +243,9 @@ export async function POST(req: Request) {
       chat_history: latestKBufferWindow,
       input:
         description !== ""
-          ? " Description of image to lookup: " + description + "<|eot_id|>"
+          ? currentMessageContent +
+            " Description of image to lookup: " +
+            description
           : currentMessageContent,
       case_id: caseId,
     });

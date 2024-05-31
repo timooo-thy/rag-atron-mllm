@@ -8,17 +8,21 @@ import {
 import initialiseVectorStore from "@/utils/db";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { PromptTemplate } from "@langchain/core/prompts";
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import sharp from "sharp";
+import { v4 as uuidv4 } from "uuid";
 
 export async function getRetriever(query: string, llm: ChatOllama) {
-  const retreiverLLM = new ChatOllama({
+  const retrieverLLM = new ChatOllama({
     model: "llama3:instruct",
     temperature: 0,
   });
 
-  const selectRetrieverChain = RETRIEVER_PROMPT.pipe(retreiverLLM);
+  const selectRetrieverChain = RETRIEVER_PROMPT.pipe(retrieverLLM);
 
   const response = await selectRetrieverChain.invoke({
-    query: query,
+    query: query + "<|eot_id|>",
   });
 
   // Retrieve the vector store
@@ -61,4 +65,54 @@ export async function getRetriever(query: string, llm: ChatOllama) {
     });
   }
   return { vectorStore, combineDocsChains };
+}
+
+export const s3Client = new S3Client({
+  region: process.env.AWS_REGION!,
+  credentials: {
+    accessKeyId: process.env.AWS_BUCKET_ACCESS_KEY!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
+
+export async function uploadImagesAndGenerateUrls(chatFilesBase64: string[]) {
+  const uploadPromises = chatFilesBase64.map(async (file, index) => {
+    try {
+      const uuid = uuidv4();
+      const buffer = Buffer.from(file.split(",")[1], "base64");
+      const resizedFile = await sharp(buffer).resize(200).toBuffer();
+
+      const putObjectCommand = new PutObjectCommand({
+        Bucket: process.env.AWS_BUCKET_NAME!,
+        Key: uuid,
+        Body: resizedFile,
+      });
+
+      const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+        expiresIn: 60,
+      });
+
+      await fetch(signedURL, {
+        method: "PUT",
+        body: resizedFile,
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+      });
+
+      return {
+        index,
+        url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`,
+      };
+    } catch (error) {
+      console.log(error);
+      return { index, url: null };
+    }
+  });
+
+  const results = await Promise.all(uploadPromises);
+  results.sort((a, b) => a.index - b.index);
+
+  const imageUrls = results.map((result) => result.url);
+  return imageUrls;
 }
