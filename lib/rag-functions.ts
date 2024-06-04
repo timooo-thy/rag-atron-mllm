@@ -12,6 +12,7 @@ import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
+import { NextResponse } from "next/server";
 
 export async function getRetriever(query: string, llm: ChatOllama) {
   const retrieverLLM = new ChatOllama({
@@ -115,4 +116,36 @@ export async function uploadImagesAndGenerateUrls(chatFilesBase64: string[]) {
 
   const imageUrls = results.map((result) => result.url);
   return imageUrls;
+}
+
+export async function uploadVideo(videoBase64: string) {
+  try {
+    const uuid = uuidv4();
+    const buffer = Buffer.from(videoBase64.split(",")[1], "base64");
+
+    // Upload video to s3
+    const putObjectCommand = new PutObjectCommand({
+      Bucket: process.env.AWS_BUCKET_NAME!,
+      Key: uuid,
+      Body: buffer,
+    });
+
+    const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+      expiresIn: 60,
+    });
+
+    await fetch(signedURL, {
+      method: "PUT",
+      body: buffer,
+      headers: {
+        "Content-Type": "video/mp4",
+      },
+    });
+
+    // Fetch video url from s3
+    const videoUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;
+    return videoUrl;
+  } catch (error) {
+    return "";
+  }
 }

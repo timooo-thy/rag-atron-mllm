@@ -24,7 +24,12 @@ import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
-import { getRetriever, uploadImagesAndGenerateUrls } from "@/lib/rag-functions";
+import {
+  getRetriever,
+  uploadImagesAndGenerateUrls,
+  uploadVideo,
+} from "@/lib/rag-functions";
+import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -71,39 +76,55 @@ export async function POST(req: Request) {
 
   // Video transcription
   if (fileType === "video" && chatFilesBase64 && chatFilesBase64.length > 0) {
-    //TODO: Implement video logic by sending to s3 bucket
-    const response = await fetch("http://localhost:8002/predict", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        query: currentMessageContent,
-        video_url:
-          "https://htx-test.s3.ap-southeast-1.amazonaws.com/3195394-uhd_3840_2160_25fps.mp4",
-      }),
-    });
-    if (!response.body) {
-      throw new Error("No response body from fetch");
+    const video_url = await uploadVideo(chatFilesBase64[0]);
+
+    if (!video_url) {
+      return NextResponse.json(
+        { error: "Error uploading video" },
+        { status: 400 }
+      );
     }
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    const stream = new ReadableStream({
-      async start(controller) {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          // Decode the Uint8Array chunk to a string
-          const chunk = decoder.decode(value, { stream: true });
-          // Text chunks are lines that look like this 0:my-chunk\n hence the need to format
-          const formattedChunk = formatStreamPart("text", chunk);
-          // Enqueue the chunk to the controller
-          controller.enqueue(formattedChunk);
-        }
-        controller.close();
-      },
-    });
-    return new StreamingTextResponse(stream);
+    try {
+      const response = await fetch("http://localhost:8002/predict", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          query: currentMessageContent,
+          video_url: video_url,
+        }),
+      });
+      if (!response.body) {
+        return NextResponse.json(
+          { error: "Error fetching response" },
+          { status: 400 }
+        );
+      }
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      const stream = new ReadableStream({
+        async start(controller) {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            // Decode the Uint8Array chunk to a string
+            const chunk = decoder.decode(value, { stream: true });
+            // Text chunks are lines that look like this 0:my-chunk\n hence the need to format
+            const formattedChunk = formatStreamPart("text", chunk);
+            // Enqueue the chunk to the controller
+            controller.enqueue(formattedChunk);
+          }
+          controller.close();
+        },
+      });
+      return new StreamingTextResponse(stream);
+    } catch (e) {
+      return NextResponse.json(
+        { error: "Error fetching response" },
+        { status: 400 }
+      );
+    }
   }
 
   // Initialise ChatOllama model with stream and handlers
