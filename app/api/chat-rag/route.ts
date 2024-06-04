@@ -9,11 +9,7 @@ import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import { createHistoryAwareRetriever } from "langchain/chains/history_aware_retriever";
-import {
-  AIMessage,
-  HumanMessage,
-  MessageContent,
-} from "@langchain/core/messages";
+import { HumanMessage, MessageContent } from "@langchain/core/messages";
 import {
   REPHRASE_PROMPT,
   IMAGE_PROMPT,
@@ -25,27 +21,13 @@ import { formSchema } from "@/lib/utils";
 import OpenAI from "openai";
 import { toFile } from "openai/uploads";
 import {
+  formatMessage,
   getRetriever,
   uploadImagesAndGenerateUrls,
   uploadVideo,
 } from "@/lib/rag-functions";
-import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
-
-const formatMessage = (message: VercelChatMessage) => {
-  return message.role === "user"
-    ? new HumanMessage(
-        "<|start_header_id|>user<|end_header_id|>" +
-          message.content +
-          "<|eot_id|>"
-      )
-    : new AIMessage(
-        "<|start_header_id|>assistant<|end_header_id|>" +
-          message.content +
-          "<|eot_id|>"
-      );
-};
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -79,10 +61,7 @@ export async function POST(req: Request) {
     const video_url = await uploadVideo(chatFilesBase64[0]);
 
     if (!video_url) {
-      return NextResponse.json(
-        { error: "Error uploading video" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Error uploading video" });
     }
     try {
       const response = await fetch("http://localhost:8002/predict", {
@@ -96,10 +75,7 @@ export async function POST(req: Request) {
         }),
       });
       if (!response.body) {
-        return NextResponse.json(
-          { error: "Error fetching response" },
-          { status: 400 }
-        );
+        return Response.json({ error: "Error fetching response" });
       }
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
@@ -120,10 +96,7 @@ export async function POST(req: Request) {
       });
       return new StreamingTextResponse(stream);
     } catch (e) {
-      return NextResponse.json(
-        { error: "Error fetching response" },
-        { status: 400 }
-      );
+      return Response.json({ error: "Error fetching response" });
     }
   }
 
