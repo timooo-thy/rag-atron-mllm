@@ -40,8 +40,8 @@ export default function UploadFilesButton() {
           className="bg-transparent flex justify-between gap-x-1 text-black hover:bg-gray-100 w-full"
           onClick={handleFileInputClick}
         >
-          <span>Image/Audio</span>
-          <FileText className="h-5 w-5" />
+          <span>Image/Audio/Video</span>
+          {/* <FileText className="h-5 w-5" /> */}
           <Input
             type="file"
             accept="image/png, image/jpeg, audio/mpeg, video/mp4"
