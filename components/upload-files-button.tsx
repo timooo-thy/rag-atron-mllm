@@ -44,7 +44,7 @@ export default function UploadFilesButton() {
           <FileText className="h-5 w-5" />
           <Input
             type="file"
-            accept="image/png, image/jpeg, audio/mpeg"
+            accept="image/png, image/jpeg, audio/mpeg, video/mp4"
             name="fileInput"
             className="hidden"
             ref={fileInputRef}

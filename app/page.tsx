@@ -71,7 +71,10 @@ export default function Chat() {
 
             if (file.type.match("audio/mpeg")) {
               reader.readAsArrayBuffer(file);
-            } else if (file.type.match("image/*")) {
+            } else if (
+              file.type.match("image/*") ||
+              file.type.match("video/*")
+            ) {
               reader.readAsDataURL(file);
             } else {
               reject(new Error("Unsupported file type"));
@@ -90,25 +93,33 @@ export default function Chat() {
       // Determine if the first file is image or audio
       const isImage = files[0].type.startsWith("image/");
       const isAudio = files[0].type.startsWith("audio/");
+      const isVideo = files[0].type.startsWith("video/");
 
       return files.every((file) => {
         return (
           (isImage && file.type.startsWith("image/")) ||
-          (isAudio && file.type.startsWith("audio/"))
+          (isAudio && file.type.startsWith("audio/")) ||
+          (isVideo && file.type.startsWith("video/"))
         );
       });
     };
 
     if (!allFilesAreAudioOrImage(chatFiles)) {
-      toast.warning("Mix of audio and image files are not supported");
-      return;
+      return toast.warning("Mix of audio/video/image files are not supported");
     }
 
     const checkFileType = (files: File[]) => {
       if (files.length === 0) {
         return null;
       }
-      return files[0].type.startsWith("image/") ? "image" : "audio";
+
+      if (files[0].type.startsWith("video/")) {
+        return "video";
+      } else if (files[0].type.startsWith("audio/")) {
+        return "audio";
+      } else if (files[0].type.startsWith("image/")) {
+        return "image";
+      }
     };
 
     const fileType = checkFileType(chatFiles);

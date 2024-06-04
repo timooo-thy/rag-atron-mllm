@@ -3,7 +3,7 @@ import { twMerge } from "tailwind-merge";
 import { z } from "zod";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-const ACCEPTED_FILE_TYPES = ["image/png", "image/jpeg", "audio/mpeg"];
+const ACCEPTED_FILE_TYPES = ["image/png", "image/jpeg"];
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -25,7 +25,7 @@ export const formSchema = z
       message: "Please select a model.",
     }),
     chatFilesBase64: z.array(z.string()).optional(),
-    fileType: z.enum(["image", "audio"]).nullable(),
+    fileType: z.enum(["image", "audio", "video"]).nullable(),
   })
   .passthrough();
 
