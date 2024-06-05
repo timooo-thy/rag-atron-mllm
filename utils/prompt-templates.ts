@@ -56,7 +56,7 @@ const RETRIEVER_PROMPT = ChatPromptTemplate.fromMessages([
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>" +
       "Classify the type of user query into one of two categories: 'Image Lookup' or 'Case Analysis'.\n" +
       "If user did not ask anything image related, return 'Case Analysis'. " +
-      "Return only the query type and no other text and quotations that best fit the query by the user.<|eot_id|>",
+      "Only return the query type and no other text and quotations that best fit the user's query.<|eot_id|>",
   ],
   [
     "user",
@@ -71,7 +71,7 @@ const IMAGE_CLASSIFIER_PROMPT = ChatPromptTemplate.fromMessages([
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>" +
       "Classify the type of user query into one of two categories: 'Image Lookup' or 'Describe Image'.\n" +
       "Return 'Image Lookup' if user is trying to find similar images. Return 'Describe Image' if user wants to describe the images.\n" +
-      "Return only the query type and no other text and quotations that best fit the query by the user.<|eot_id|>",
+      "Only return the query type and no other text and quotations that best fit the user's query.<|eot_id|>",
   ],
   [
     "user",
