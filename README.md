@@ -1,43 +1,102 @@
-# Vercel AI SDK, Next.js, LangChain, OpenAI Chat Example
+# Multimodal LLM Chatbot
 
-This example shows how to use the [Vercel AI SDK](https://sdk.vercel.ai/docs) with [Next.js](https://nextjs.org/), [LangChain](https://js.langchain.com), and [OpenAI](https://openai.com) to create a ChatGPT-like AI-powered streaming chat bot.
+Welcome to the Multimodal LLM Project Chatbot! This project leverages the power of Vercel's AI SDK, LangChain JS, and Chroma DB (vector DB) to provide a versatile and interactive chatbot experience. 
+Currently, this project is tested with Ollama (Llama3:8b and Llava:13b) to minimise cost. Do change to OpenAI/Cohere/Anthropic if needed.
 
-## Deploy your own
+## Overview
 
-Deploy the example using [Vercel](https://vercel.com?utm_source=github&utm_medium=readme&utm_campaign=ai-sdk-example):
+This chatbot is built on Next.js and offers a wide range of features, including:
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fai%2Ftree%2Fmain%2Fexamples%2Fnext-langchain&env=OPENAI_API_KEY&envDescription=OpenAI%20API%20Key&envLink=https%3A%2F%2Fplatform.openai.com%2Faccount%2Fapi-keys&project-name=ai-chat-langchain&repository-name=next-ai-chat-langchain)
+- **Retrieval-Augmented Generation (RAG):** Enhances the chatbot's responses by retrieving relevant information from a custom knowledge base.
+- **Image-to-Image Query:** Allows users to input an image and get relevant image outputs via RAG.
+- **Text-to-Image Query:** Converts textual queries into retrieve relevant images via RAG.
+- **Text-to-Text Query (RAG):** Generates textual responses from knowledge base via RAG.
+- **Audio Transcription:** Converts audio input into text.
+- **Video to Text:** Summarises video with VideoLLaVa.
 
-## How to use
+## Features
 
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init), [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/), or [pnpm](https://pnpm.io) to bootstrap the example:
+- **Routing of LLM Requests:** Utilises LangChain for efficient routing and handling of large language model requests.
+- **Interactive Playground:** Users can ingest their images or conversation files and query based on case IDs.
+- **Customisation Options:** Adjust temperature and retrieval settings to fine-tune the chatbot's responses.
+- **Conversation History:** Keeps track of conversation history for better context and continuity in interactions.
+- **Streaming:** Streaming of replies from AI assistant for better UX.
 
-```bash
-npx create-next-app --example https://github.com/vercel/ai/tree/main/examples/next-langchain next-langchain-app
-```
+## Installation
 
-```bash
-yarn create next-app --example https://github.com/vercel/ai/tree/main/examples/next-langchain next-langchain-app
-```
+This project uses Bun as the package installer. Follow the steps below to set up the project:
 
-```bash
-pnpm create next-app --example https://github.com/vercel/ai/tree/main/examples/next-langchain next-langchain-app
-```
+1. **Clone the repository:**
 
-To run the example locally you need to:
+   ```bash
+   git clone https://github.com/your-username/multimodal-llm-chatbot.git
+   cd multimodal-llm-chatbot
+   ```
+2. **Install dependencies:**
 
-1. Sign up at [OpenAI's Developer Platform](https://platform.openai.com/signup).
-2. Go to [OpenAI's dashboard](https://platform.openai.com/account/api-keys) and create an API KEY.
-3. Set the required OpenAI environment variable as the token value as shown [the example env file](./.env.local.example) but in a new file called `.env.local`.
-4. `pnpm install` to install the required dependencies.
-5. `pnpm dev` to launch the development server.
+   ```bash
+   bun install
+   ```
+3. **Create a Chroma Client and run:**
 
-## Learn More
+   ```bash
+   docker pull chromadb/chroma 
+   docker run -p 8000:8000 chromadb/chroma 
+   ```
+4. **Ensure Ollama is installed**
 
-To learn more about LangChain, OpenAI, Next.js, and the Vercel AI SDK take a look at the following resources:
+   Refer to this [link](https://github.com/ollama/ollama) if you have not done so. Skip this step if you intend to use OpenAI/Cohere/Anthropic instead.
+   
+4. **Insert API Keys and insert into .env (Follow .env.local.example. Langsmith for tracing and evaluation purposes)**
 
-- [Vercel AI SDK docs](https://sdk.vercel.ai/docs) - learn mode about the Vercel AI SDK
-- [Vercel AI Playground](https://play.vercel.ai) - compare and tune 20+ AI models side-by-side
-- [LangChain Documentation](https://js.langchain.com/docs) - learn about LangChain
-- [OpenAI Documentation](https://platform.openai.com/docs) - learn about OpenAI features and API.
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
+   ```bash
+   OPENAI_API_KEY=""
+   LANGCHAIN_TRACING_V2=true
+   LANGCHAIN_ENDPOINT="https://api.smith.langchain.com"
+   LANGCHAIN_API_KEY=""
+   LANGCHAIN_PROJECT=""
+   LANGCHAIN_CALLBACKS_BACKGROUND=true
+   CHROMA_DB_URL=""
+   AWS_BUCKET_NAME=""
+   AWS_REGION=""
+   AWS_BUCKET_ACCESS_KEY=""
+   AWS_SECRET_ACCESS_KEY=""
+   ```
+5. **Start the development server:**
+
+   ```bash
+   bun run dev
+   ```
+## Usage
+
+### Ingest Data:
+
+- Upload images or conversation text files.
+- Assign a case ID to each upload for easy retrieval via metadata.
+
+### Query the Chatbot:
+
+- Use the interface to input your queries.
+- Adjust the temperature and retrieval sliders to customise responses.
+- View conversation history for context.
+
+### Explore Different Query Types:
+
+- **Text-to-Text:** Type your query and receive a text response.
+- **Image-to-Image:** Upload an image and get related images in response.
+- **Text-to-Image:** Input text and related image described by input text.
+- **Audio Transcription:** Upload an audio file to get the transcribed text.
+- **Video to Text:** Upload a video file to query/summarise the video.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+For any questions or feedback, please open an issue or contact us at timothylhy@hotmail.com.
+
+---
+
+Thank you for using the Multimodal LLM Project Chatbot! I hope you find it useful and engaging.
+
