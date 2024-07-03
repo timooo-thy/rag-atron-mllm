@@ -38,17 +38,20 @@ export async function POST(req: Request) {
       },
     });
 
-    const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 60,
-    });
+    await s3Client.send(putObjectCommand);
+    // console.log("Direct Upload Response: ", response);
 
-    await fetch(signedURL, {
-      method: "PUT",
-      body: resizedFile,
-      headers: {
-        "Content-Type": file.type,
-      },
-    });
+    // const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+    //   expiresIn: 60,
+    // });
+
+    // await fetch(signedURL, {
+    //   method: "PUT",
+    //   body: resizedFile,
+    //   headers: {
+    //     "Content-Type": file.type,
+    //   },
+    // });
 
     // Fetch image from s3 and convert to ArrayBuffer
     const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;

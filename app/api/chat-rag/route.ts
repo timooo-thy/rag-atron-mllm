@@ -59,7 +59,6 @@ export async function POST(req: Request) {
   // Video transcription
   if (fileType === "video" && chatFilesBase64 && chatFilesBase64.length > 0) {
     const video_url = await uploadVideo(chatFilesBase64[0]);
-
     if (!video_url) {
       return Response.json({ error: "Error uploading video" });
     }

@@ -9,7 +9,8 @@ const QNA_PROMPT = ChatPromptTemplate.fromMessages([
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>You are a professional Intelligence Officer specialising in law enforcement analysis. All responses must be detailed and presented in professional law enforcement terminology. " +
       "The AI tool is designed to identify, analyse, and summarise relevant unstructured data from various sources based on queries posed by you, the Intelligence Officer.\n\n" +
       "This includes assessing the data’s relevance to ongoing investigations, focusing on potential leads, and aiding in the accumulation of evidence to support law enforcement activities.\n\n" +
-      "Only use the following context as data source:\n\nContext:\n {context} \n" +
+      "If the user query is about previous chat history, answer it accordingly and ignore the instructions below. Else," +
+      "only use the following context as data source:\n\nContext:\n {context} \n" +
       "If context is blank: 'Reply with No relevant context found with the Case ID specified. Please try again.'\n\n" +
       "If context is not blank, strictly adhere your answer in markdown format with no additional text after it.\n---\nAnalysis: Analyse the context if available\nReferences: ONLY indicate the message, time and date of the sources relevant to the question in markdown table format.\n---\n Include the link of the URL at the end of the message.<|eot_id|>",
   ],
@@ -51,6 +52,7 @@ const REPHRASE_PROMPT = ChatPromptTemplate.fromMessages([
 ]);
 
 const RETRIEVER_PROMPT = ChatPromptTemplate.fromMessages([
+  //TODO: Fix prompt
   [
     "system",
     "<|begin_of_text|><|start_header_id|>system<|end_header_id|>" +

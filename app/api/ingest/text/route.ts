@@ -27,17 +27,19 @@ export async function POST(req: Request) {
       Metadata: { caseId: caseEmbedId.toString() },
     });
 
-    const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-      expiresIn: 60,
-    });
+    await s3Client.send(putObjectCommand);
 
-    await fetch(signedURL, {
-      method: "PUT",
-      body: new TextEncoder().encode(text),
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-    });
+    // const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+    //   expiresIn: 60,
+    // });
+
+    // await fetch(signedURL, {
+    //   method: "PUT",
+    //   body: new TextEncoder().encode(text),
+    //   headers: {
+    //     "Content-Type": "text/plain; charset=utf-8",
+    //   },
+    // });
 
     console.log("Successfully uploaded text to s3.");
 
