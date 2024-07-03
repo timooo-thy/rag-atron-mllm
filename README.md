@@ -29,7 +29,7 @@ This project uses Bun as the package installer. Follow the steps below to set up
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/your-username/multimodal-llm-chatbot.git
+   git clone https://github.com/timooo-thy/htx-mllm.git
    cd multimodal-llm-chatbot
    ```
 2. **Install dependencies:**
