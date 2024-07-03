@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { PineconeStore } from "@langchain/pinecone";
 import initialiseVectorStore from "@/utils/db";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { embedTextSchema } from "@/lib/utils";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3Client } from "@/lib/rag-functions";
@@ -29,17 +28,17 @@ export async function POST(req: Request) {
 
     await s3Client.send(putObjectCommand);
 
-    // const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-    //   expiresIn: 60,
-    // });
+    const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+      expiresIn: 60,
+    });
 
-    // await fetch(signedURL, {
-    //   method: "PUT",
-    //   body: new TextEncoder().encode(text),
-    //   headers: {
-    //     "Content-Type": "text/plain; charset=utf-8",
-    //   },
-    // });
+    await fetch(signedURL, {
+      method: "PUT",
+      body: new TextEncoder().encode(text),
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
 
     console.log("Successfully uploaded text to s3.");
 
@@ -72,12 +71,6 @@ export async function POST(req: Request) {
         "hnsw:space": "cosine",
       },
     });
-
-    // await PineconeStore.fromDocuments(splitDocuments, embeddings, {
-    //   pineconeIndex: pineconeIndex,
-    //   maxConcurrency: 5,
-    //   namespace: "text",
-    // });
 
     console.log(
       `Successfully indexed ${splitDocuments.length} documents in vector db.`

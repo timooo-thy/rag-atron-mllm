@@ -106,17 +106,17 @@ export async function uploadImagesAndGenerateUrls(chatFilesBase64: string[]) {
 
       await s3Client.send(putObjectCommand);
 
-      // const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-      //   expiresIn: 60,
-      // });
+      const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+        expiresIn: 60,
+      });
 
-      // await fetch(signedURL, {
-      //   method: "PUT",
-      //   body: resizedFile,
-      //   headers: {
-      //     "Content-Type": "image/jpeg",
-      //   },
-      // });
+      await fetch(signedURL, {
+        method: "PUT",
+        body: resizedFile,
+        headers: {
+          "Content-Type": "image/jpeg",
+        },
+      });
 
       return {
         index,
@@ -149,17 +149,17 @@ export async function uploadVideo(videoBase64: string) {
 
     await s3Client.send(putObjectCommand);
 
-    // const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
-    //   expiresIn: 60,
-    // });
+    const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
+      expiresIn: 60,
+    });
 
-    // await fetch(signedURL, {
-    //   method: "PUT",
-    //   body: buffer,
-    //   headers: {
-    //     "Content-Type": "video/mp4",
-    //   },
-    // });
+    await fetch(signedURL, {
+      method: "PUT",
+      body: buffer,
+      headers: {
+        "Content-Type": "video/mp4",
+      },
+    });
 
     // Fetch video url from s3
     const videoUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;
