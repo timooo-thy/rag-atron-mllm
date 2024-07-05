@@ -47,7 +47,7 @@ This project uses Bun as the package installer. Follow the steps below to set up
 
    Refer to this [link](https://github.com/ollama/ollama) if you have not done so. Skip this step if you intend to use OpenAI/Cohere/Anthropic instead.
    
-4. **Insert API Keys and insert into .env (Follow .env.local.example. Langsmith for tracing and evaluation purposes)**
+5. **Insert API Keys and insert into .env (Follow .env.local.example. Langsmith for tracing and evaluation purposes)**
 
    ```bash
    OPENAI_API_KEY=""
@@ -62,11 +62,31 @@ This project uses Bun as the package installer. Follow the steps below to set up
    AWS_BUCKET_ACCESS_KEY=""
    AWS_SECRET_ACCESS_KEY=""
    ```
-5. **Start the development server:**
+6. **Start the development server:**
 
    ```bash
    bun run dev
    ```
+7. **Only for Production**:
+
+   Start a tmux session
+   ```bash
+   tmux new -s narconet
+   ```
+
+   One tmux terminal to build and run the server
+   ```bash
+   bun run build
+   bun run start
+   ```
+
+   And the other tmux terminal to port over to ngrok
+   ```bash
+   ngrok http --domain=[***] [port]
+   ```
+
+   Alternatively, you can dockerise this instead.
+
 ## Usage
 
 ### Ingest Data:
