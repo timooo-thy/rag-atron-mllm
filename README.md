@@ -126,4 +126,4 @@ For any questions or feedback, please open an issue or contact us at timothylhy@
 
 ---
 
-Thank you for using the Multimodal LLM Project Chatbot! I hope you find it useful and engaging.
+Thank you for using RAG-aTron Chatbot! I hope you find it useful and engaging.
