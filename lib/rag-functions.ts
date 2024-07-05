@@ -1,4 +1,3 @@
-import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import {
   QNA_PROMPT,
@@ -11,6 +10,7 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { PromptTemplate } from "@langchain/core/prompts";
 import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { ChatOpenAI } from "@langchain/openai";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
@@ -18,29 +18,21 @@ import { AIMessage, HumanMessage } from "@langchain/core/messages";
 // Format the message to be sent to the model
 export const formatMessage = (message: VercelChatMessage) => {
   return message.role === "user"
-    ? new HumanMessage(
-        "<|start_header_id|>user<|end_header_id|>" +
-          message.content +
-          "<|eot_id|>"
-      )
-    : new AIMessage(
-        "<|start_header_id|>assistant<|end_header_id|>" +
-          message.content +
-          "<|eot_id|>"
-      );
+    ? new HumanMessage(message.content)
+    : new AIMessage(message.content);
 };
 
-// Get the right vector store and combineDocsChain based on the user's query (Image Lookup or Case Analysis)
-export async function getRetriever(query: string, llm: ChatOllama) {
-  const retrieverLLM = new ChatOllama({
-    model: "llama3:instruct",
+export async function getRetriever(query: string, llm: ChatOpenAI) {
+  const retrieverLLM = new ChatOpenAI({
+    model: "gpt-4o",
+    apiKey: process.env.OPENAI_API_KEY!,
     temperature: 0,
   });
 
   const selectRetrieverChain = RETRIEVER_PROMPT.pipe(retrieverLLM);
 
   const response = await selectRetrieverChain.invoke({
-    query: query + "<|eot_id|>",
+    query: query,
   });
 
   // Retrieve the vector store

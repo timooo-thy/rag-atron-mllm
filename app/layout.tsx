@@ -7,8 +7,8 @@ import PlaygroundSettingsProvider from "@/context/playground-settings-provider";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "NarcoNet AI",
-  description: "NarcoNet AI Chatbot for CNB",
+  title: "Multimodal RAG AI",
+  description: "Multimodal RAG AI Chatbot",
 };
 
 export default function RootLayout({

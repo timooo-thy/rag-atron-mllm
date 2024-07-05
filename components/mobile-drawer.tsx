@@ -19,7 +19,7 @@ type MobileDrawerProps = {
 export default function MobileDrawer({ setInput }: MobileDrawerProps) {
   return (
     <header className="sticky top-0 z-10 flex h-[53px] items-center gap-1 border-b px-4  backdrop-blur-sm">
-      <h1 className="text-xl font-semibold">NarcoNet AI</h1>
+      <h1 className="text-xl font-semibold">RAG-aTron AI</h1>
       <Drawer>
         <DrawerTrigger asChild>
           <Button variant="ghost" size="icon" className="md:hidden">

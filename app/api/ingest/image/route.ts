@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import initialiseVectorStore from "@/utils/db";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
-import { ChatOllama } from "@langchain/community/chat_models/ollama";
+import { ChatOpenAI } from "@langchain/openai";
 import { HumanMessage } from "@langchain/core/messages";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
@@ -55,23 +55,23 @@ export async function POST(req: Request) {
 
     // Fetch image from s3 and convert to ArrayBuffer
     const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;
-
-    const llm = new ChatOllama({
-      model: "llava:13b",
+    // Describe image using llava:13b model
+    const llm = new ChatOpenAI({
+      model: "gpt-4o",
       temperature: 0.6,
     });
-
-    // Describe image using llava:13b model
     const res = await llm.invoke([
       new HumanMessage({
         content: [
           {
             type: "text",
-            text: "Describe this image succinctly while being descriptive under 30 words to be used as a search query in a vector database.",
+            text: "Describe this image succinctly while being descriptive under 30 words to be used as a search query in a vector database. Only include the description and no other text.",
           },
           {
             type: "image_url",
-            image_url: `${Buffer.from(resizedFile).toString("base64")}`,
+            image_url: {
+              url: imageUrl,
+            },
           },
         ],
       }),

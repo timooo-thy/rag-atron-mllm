@@ -1,9 +1,8 @@
-import { OllamaEmbeddings } from "@langchain/community/embeddings/ollama";
+import { OpenAIEmbeddings } from "@langchain/openai";
 
 const initialiseVectorStore = async () => {
-  // Embeddings for text
-  const embeddings = new OllamaEmbeddings({
-    model: "nomic-embed-text",
+  const embeddings = new OpenAIEmbeddings({
+    model: "text-embedding-3-large",
   });
 
   return { embeddings };

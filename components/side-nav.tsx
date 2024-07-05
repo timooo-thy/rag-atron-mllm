@@ -16,7 +16,7 @@ export default function SideNav() {
     <aside className="inset-y fixed left-0 z-20 flex h-full flex-col border-r">
       <div className="border-b p-2">
         <Button variant="outline" size="icon" aria-label="Home">
-          <Image src="/htx-logo.webp" width={32} height={32} alt="HTX" />
+          <Image src="/rag-atron-logo.webp" width={32} height={32} alt="Logo" />
         </Button>
       </div>
       <nav className="grid gap-1 p-2">
@@ -26,13 +26,13 @@ export default function SideNav() {
               variant="ghost"
               size="icon"
               className="rounded-lg bg-muted"
-              aria-label="NarcoNet AI"
+              aria-label="RAG-aTron AI"
             >
               <SquareTerminal className="size-5" />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right" sideOffset={5}>
-            NarcoNet AI
+            RAG-aTron AI
           </TooltipContent>
         </Tooltip>
         <Tooltip>

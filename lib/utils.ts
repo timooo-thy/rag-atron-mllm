@@ -22,7 +22,7 @@ export const formSchema = z
       .max(1, "Temperature must be a number from 0 to 1"),
     similarity: z.number().int().min(1).max(10),
     context: z.number().int().min(0).max(10),
-    modelName: z.enum(["llama3:instruct", "llama3:70b-instruct", "llava:13b"], {
+    modelName: z.enum(["gpt-4o", "gpt-4-turbo", "gpt-3.5-turbo"], {
       message: "Please select a model.",
     }),
     chatFilesBase64: z.array(z.string()).optional(),

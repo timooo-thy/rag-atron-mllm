@@ -45,13 +45,12 @@ export default function Settings() {
             <SelectValue placeholder="Select a model" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="llama3:instruct">
+            <SelectItem value="gpt-4o">
               <div className="flex items-start gap-3 text-muted-foreground">
                 <Rabbit className="size-5" />
                 <div className="grid gap-0.5">
                   <p>
-                    <span className="font-medium text-foreground">Llama3:</span>{" "}
-                    8b
+                    <span className="font-medium text-foreground">GPT-4o</span>
                   </p>
                   <p className="text-xs" data-description>
                     Our fastest model for general use cases.
@@ -59,13 +58,14 @@ export default function Settings() {
                 </div>
               </div>
             </SelectItem>
-            <SelectItem value="llama3:70b-instruct">
+            <SelectItem value="gpt-4-turbo">
               <div className="flex items-start gap-3 text-muted-foreground">
                 <Bird className="size-5" />
                 <div className="grid gap-0.5">
                   <p>
-                    <span className="font-medium text-foreground">Llama3:</span>{" "}
-                    70b
+                    <span className="font-medium text-foreground">
+                      GPT-4-Turbo
+                    </span>
                   </p>
                   <p className="text-xs" data-description>
                     The most powerful model for complex computations.
@@ -73,16 +73,17 @@ export default function Settings() {
                 </div>
               </div>
             </SelectItem>
-            <SelectItem value="llava:13b">
+            <SelectItem value="gpt-3.5-turbo">
               <div className="flex items-start gap-3 text-muted-foreground">
                 <Turtle className="size-5" />
                 <div className="grid gap-0.5">
                   <p>
-                    <span className="font-medium text-foreground">LLaVa:</span>{" "}
-                    13b
+                    <span className="font-medium text-foreground">
+                      GPT-3.5-Turbo
+                    </span>
                   </p>
                   <p className="text-xs" data-description>
-                    A multimodal LLM for complex tasks.
+                    The cheapest and effective model.
                   </p>
                 </div>
               </div>

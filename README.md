@@ -1,7 +1,7 @@
-# Multimodal LLM Chatbot
+# RAG-aTron Multimodal LLM Chatbot
 
-Welcome to the Multimodal LLM Project Chatbot! This project leverages the power of Vercel's AI SDK, LangChain JS, and Chroma DB (vector DB) to provide a versatile and interactive chatbot experience. 
-Currently, this project is tested with Ollama (Llama3:8b and Llava:13b) to minimise cost. Do change to OpenAI/Cohere/Anthropic if needed.
+Welcome to the RAG-aTron AI! This project leverages the power of Vercel's AI SDK, LangChain JS, and Chroma DB (vector DB) to provide a versatile and interactive chatbot experience. This showcases the use of multimodal LLMs to assist with crimes and case analysis.
+Currently, this project is tested with OpenAI. Do change to Cohere/Anthropic if needed.
 
 ## Overview
 
@@ -29,24 +29,27 @@ This project uses Bun as the package installer. Follow the steps below to set up
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/timooo-thy/htx-mllm.git
-   cd htx-mllm
+   git clone https://github.com/timooo-thy/rag-atron-mllm.git
+   cd rag-atron-mllm
    ```
+
 2. **Install dependencies:**
 
    ```bash
    bun install
    ```
+
 3. **Create a Chroma Client and run:**
 
    ```bash
-   docker pull chromadb/chroma 
-   docker run -p 8000:8000 chromadb/chroma 
+   docker pull chromadb/chroma
+   docker run -p 8000:8000 chromadb/chroma
    ```
+
 4. **Ensure Ollama is installed**
 
    Refer to this [link](https://github.com/ollama/ollama) if you have not done so. Skip this step if you intend to use OpenAI/Cohere/Anthropic instead.
-   
+
 5. **Insert API Keys and insert into .env (Follow .env.local.example. Langsmith for tracing and evaluation purposes)**
 
    ```bash
@@ -62,25 +65,30 @@ This project uses Bun as the package installer. Follow the steps below to set up
    AWS_BUCKET_ACCESS_KEY=""
    AWS_SECRET_ACCESS_KEY=""
    ```
+
 6. **Start the development server:**
 
    ```bash
    bun run dev
    ```
+
 7. **Only for Production**:
 
    Start a tmux session
+
    ```bash
-   tmux new -s narconet
+   tmux new -s [session-name]
    ```
 
    One tmux terminal to build and run the server
+
    ```bash
    bun run build
    bun run start
    ```
 
    And the other tmux terminal to port over to ngrok
+
    ```bash
    ngrok http --domain=[***] [port]
    ```
@@ -119,4 +127,3 @@ For any questions or feedback, please open an issue or contact us at timothylhy@
 ---
 
 Thank you for using the Multimodal LLM Project Chatbot! I hope you find it useful and engaging.
-

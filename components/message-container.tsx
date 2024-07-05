@@ -53,7 +53,7 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
             ) : (
               <div className="flex items-center gap-3 h-[24px]">
                 <Bot className="w-6 h-6 rounded-full p-1 ring-2 ring-black/30 dark:ring-secondary/40" />
-                <p className="font-bold">NarcoNet AI</p>
+                <p className="font-bold">RAG-aTron AI</p>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

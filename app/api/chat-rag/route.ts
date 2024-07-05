@@ -4,7 +4,6 @@ import {
   Message as VercelChatMessage,
   formatStreamPart,
 } from "ai";
-import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
@@ -19,6 +18,7 @@ import { PromptTemplate } from "@langchain/core/prompts";
 import initialiseVectorStore from "@/utils/db";
 import { formSchema } from "@/lib/utils";
 import OpenAI from "openai";
+import { ChatOpenAI } from "@langchain/openai";
 import { toFile } from "openai/uploads";
 import {
   formatMessage,
@@ -26,6 +26,7 @@ import {
   uploadImagesAndGenerateUrls,
   uploadVideo,
 } from "@/lib/rag-functions";
+import { Prompt } from "@/lib/type";
 
 export const dynamic = "force-dynamic";
 
@@ -69,8 +70,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      // Fetch response from the video llava (dockerised model)
-      const response = await fetch("http://localhost:8002/predict", {
+      const response = await fetch("https://narconetvideo.ngrok.app/predict", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -110,18 +110,19 @@ export async function POST(req: Request) {
     }
   }
 
-  // Initialise ChatOllama model with stream and handlers
+  // Initialise OpenaAI model with stream and handlers
   const { stream, handlers } = LangChainStream();
 
   // Main LLM
-  const llm = new ChatOllama({
+  const llm = new ChatOpenAI({
     model: modelName,
     callbacks: [handlers],
+    streaming: true,
     temperature: temperature,
   });
 
   // History Aware LLM
-  const rephrasingLLM = new ChatOllama({
+  const rephrasingLLM = new ChatOpenAI({
     model: modelName,
     temperature: temperature,
   });
@@ -158,9 +159,12 @@ export async function POST(req: Request) {
     chatFilesBase64 &&
     chatFilesBase64.length > 0
   ) {
-    // Retriever LLM (Image lookup or describe image)
-    const retreiverLLM = new ChatOllama({
-      model: "llama3:instruct",
+    console.log(
+      `Describe Images with OpenAI, total of ${chatFilesBase64.length} images.`
+    );
+
+    const retreiverLLM = new ChatOpenAI({
+      model: "gpt-4o",
       temperature: 0,
     });
 
@@ -173,8 +177,8 @@ export async function POST(req: Request) {
     if (response.content === "Image Lookup") {
       imageToImage = 1;
 
-      const describerLLM = new ChatOllama({
-        model: "llava:13b",
+      const describerLLM = new ChatOpenAI({
+        model: "gpt-4o",
         temperature: 0.6,
       });
 
@@ -186,7 +190,7 @@ export async function POST(req: Request) {
               type: "text",
               text: `Describe this image succinctly while being descriptive under 30 words to be used as a search query in a vector database.`,
             },
-            { type: "image_url", image_url: chatFilesBase64[0] },
+            { type: "image_url", image_url: { url: chatFilesBase64[0] } },
           ],
         }),
       ]);
@@ -196,30 +200,23 @@ export async function POST(req: Request) {
       // Upload images to S3 and get the image urls
       const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
 
-      const prompt = [];
+      const prompt: Prompt = {
+        content: [
+          {
+            type: "text",
+            text: `Describe this image under 30 words to be used as exhibit captioning for a narcotics team. Use markdown table format (no spaces) into 2 columns: 'Exhibition Image', 'Description'. Under the Exhibition Image, use this URL: ${imageUrls} to display the image via (![image_title](URL)). User's query: ${currentMessageContent}`,
+          },
+        ],
+      };
 
       for (let i = 0; i < chatFilesBase64.length; i++) {
-        prompt.push([
-          new HumanMessage({
-            content: [
-              {
-                type: "text",
-                text: `Describe this image under 30 words to be used as exhibit captioning for a narcotics team. Use markdown table format (no spaces) into 2 columns: 'Exhibition Image', 'Description'. Under the Exhibition Image, use this URL: ${imageUrls[i]} to display the image via (![image_title](URL)). User's query: ${currentMessageContent}`,
-              },
-              { type: "image_url", image_url: chatFilesBase64[i] },
-            ],
-          }),
-        ]);
+        prompt.content.push({
+          type: "image_url",
+          image_url: { url: chatFilesBase64[i] },
+        });
       }
 
-      const llava_llm = new ChatOllama({
-        model: "llava:13b",
-        callbacks: [handlers],
-        temperature: temperature,
-      });
-
-      // Batch call to describe images for case exhibition
-      llava_llm.batch(prompt);
+      llm.invoke([new HumanMessage(prompt)]);
     }
   }
 
