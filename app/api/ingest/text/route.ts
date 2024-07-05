@@ -18,7 +18,6 @@ export async function POST(req: Request) {
   try {
     const uuid = uuidv4();
 
-    // Upload image to s3
     const putObjectCommand = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uuid,
@@ -28,10 +27,12 @@ export async function POST(req: Request) {
 
     await s3Client.send(putObjectCommand);
 
+    // Get signed url for text file
     const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
       expiresIn: 60,
     });
 
+    // Upload text file to s3
     await fetch(signedURL, {
       method: "PUT",
       body: new TextEncoder().encode(text),
@@ -40,8 +41,7 @@ export async function POST(req: Request) {
       },
     });
 
-    console.log("Successfully uploaded text to s3.");
-
+    // Split text into chunks of size 256 characters with 20 character overlap
     const splitter = new RecursiveCharacterTextSplitter({
       chunkSize: 256,
       chunkOverlap: 20,
@@ -50,6 +50,7 @@ export async function POST(req: Request) {
 
     const splitDocuments = await splitter.createDocuments([text]);
 
+    // Add url of text file to metadata in each document
     for (var doc of splitDocuments) {
       doc.metadata["caseId"] = caseEmbedId;
       doc.metadata[
@@ -59,11 +60,7 @@ export async function POST(req: Request) {
 
     const { embeddings } = await initialiseVectorStore();
 
-    // const client = new ChromaClient({
-    //   path: process.env.CHROMA_DB_URL!,
-    // });
-    // console.log(await client.listCollections());
-
+    // Index the text documents in vector db
     await Chroma.fromDocuments(splitDocuments, embeddings, {
       collectionName: "text",
       url: process.env.CHROMA_DB_URL!,
@@ -71,10 +68,6 @@ export async function POST(req: Request) {
         "hnsw:space": "cosine",
       },
     });
-
-    console.log(
-      `Successfully indexed ${splitDocuments.length} documents in vector db.`
-    );
 
     return NextResponse.json({ ok: true }, { status: 200 });
   } catch (e: any) {

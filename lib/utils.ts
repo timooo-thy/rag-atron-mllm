@@ -9,6 +9,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Client and server side validation schemas
 export const formSchema = z
   .object({
     caseId: z.coerce

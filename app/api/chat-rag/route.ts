@@ -47,6 +47,7 @@ export async function POST(req: Request) {
 
   const typedMessages = messages as VercelChatMessage[];
 
+  // Formatting messages following Llama:3's format
   const formattedPreviousMessages = typedMessages
     .slice(0, -1)
     .map(formatMessage);
@@ -54,28 +55,38 @@ export async function POST(req: Request) {
   // Get the latest k buffer window (memory)
   const latestKBufferWindow =
     context === 0 ? [] : formattedPreviousMessages.slice(-context);
+
+  // Get the current user's query
   const currentMessageContent = typedMessages[typedMessages.length - 1].content;
 
   // Video transcription
   if (fileType === "video" && chatFilesBase64 && chatFilesBase64.length > 0) {
+    // Upload video to S3 and get the video url
     const video_url = await uploadVideo(chatFilesBase64[0]);
+
     if (!video_url) {
       return Response.json({ error: "Error uploading video" });
     }
+
     try {
+      // Fetch response from the video llava (dockerised model)
       const response = await fetch("http://localhost:8002/predict", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        // Body contains the video url and the user's query
         body: JSON.stringify({
           query: currentMessageContent,
           video_url: video_url,
         }),
       });
+
       if (!response.body) {
         return Response.json({ error: "Error fetching response" });
       }
+
+      // Streaming purposes
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       const stream = new ReadableStream({
@@ -85,7 +96,7 @@ export async function POST(req: Request) {
             if (done) break;
             // Decode the Uint8Array chunk to a string
             const chunk = decoder.decode(value, { stream: true });
-            // Text chunks are lines that look like this 0:my-chunk\n hence the need to format
+            // Text chunks are lines that look like this 0:my-chunk\n hence the need to reformat
             const formattedChunk = formatStreamPart("text", chunk);
             // Enqueue the chunk to the controller
             controller.enqueue(formattedChunk);
@@ -125,9 +136,10 @@ export async function POST(req: Request) {
     let responses = [];
 
     for (const data of chatFilesBase64) {
-      //convert base64 to array buffer back to file
+      // Convert base64 to array buffer back to file
       const bufferData = await toFile(Buffer.from(data, "base64"), "audio.mp3");
 
+      // OpenAI's Whisper model for audio transcription
       const transcription = await openai.audio.transcriptions.create({
         file: bufferData,
         model: "whisper-1",
@@ -136,6 +148,7 @@ export async function POST(req: Request) {
       responses.push(transcription.text);
     }
 
+    // Small hack to enable streaming response
     llm.invoke(
       `There is/are ${responses.length} audio clips. Repeat the exact full audio transcriptions in text format and label each clip if more than 1. If transcription is empty, ask user to retry. Transcriptions:` +
         responses
@@ -145,10 +158,7 @@ export async function POST(req: Request) {
     chatFilesBase64 &&
     chatFilesBase64.length > 0
   ) {
-    console.log(
-      `Describe Images with LLaVa, total of ${chatFilesBase64.length} images.`
-    );
-
+    // Retriever LLM (Image lookup or describe image)
     const retreiverLLM = new ChatOllama({
       model: "llama3:instruct",
       temperature: 0,
@@ -168,6 +178,7 @@ export async function POST(req: Request) {
         temperature: 0.6,
       });
 
+      // Using LLM to describe the image for search query
       const response = await describerLLM.invoke([
         new HumanMessage({
           content: [
@@ -182,6 +193,7 @@ export async function POST(req: Request) {
 
       description = response.content;
     } else {
+      // Upload images to S3 and get the image urls
       const imageUrls = await uploadImagesAndGenerateUrls(chatFilesBase64);
 
       const prompt = [];
@@ -206,6 +218,7 @@ export async function POST(req: Request) {
         temperature: temperature,
       });
 
+      // Batch call to describe images for case exhibition
       llava_llm.batch(prompt);
     }
   }
@@ -215,16 +228,17 @@ export async function POST(req: Request) {
     let vectorStore;
     let combineDocsChains;
 
-    // Image to image query
+    // Image to image query (Finding similar images based on image)
     if (imageToImage) {
-      // Retrieve the vector store
       const { embeddings } = await initialiseVectorStore();
 
+      // Retrieve image vector store
       vectorStore = await Chroma.fromExistingCollection(embeddings, {
         collectionName: "images",
         url: process.env.CHROMA_DB_URL!,
       });
 
+      // Combine documents chain with url, caseId and page content
       combineDocsChains = await createStuffDocumentsChain({
         llm: llm,
         prompt: IMAGE_PROMPT,
@@ -244,6 +258,7 @@ export async function POST(req: Request) {
       ));
     }
 
+    // Retrieve k similar documents based on the user's query
     const retriever = vectorStore.asRetriever({
       k: similarity,
       filter: { caseId: caseId },

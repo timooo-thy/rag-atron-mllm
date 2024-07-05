@@ -15,6 +15,7 @@ import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 import { AIMessage, HumanMessage } from "@langchain/core/messages";
 
+// Format the message to be sent to the model
 export const formatMessage = (message: VercelChatMessage) => {
   return message.role === "user"
     ? new HumanMessage(
@@ -29,6 +30,7 @@ export const formatMessage = (message: VercelChatMessage) => {
       );
 };
 
+// Get the right vector store and combineDocsChain based on the user's query (Image Lookup or Case Analysis)
 export async function getRetriever(query: string, llm: ChatOllama) {
   const retrieverLLM = new ChatOllama({
     model: "llama3:instruct",
@@ -83,6 +85,7 @@ export async function getRetriever(query: string, llm: ChatOllama) {
   return { vectorStore, combineDocsChains };
 }
 
+// S3 Client
 export const s3Client = new S3Client({
   region: process.env.AWS_REGION!,
   credentials: {
@@ -140,7 +143,6 @@ export async function uploadVideo(videoBase64: string) {
     const uuid = uuidv4();
     const buffer = Buffer.from(videoBase64.split(",")[1], "base64");
 
-    // Upload video to s3
     const putObjectCommand = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uuid,
@@ -149,10 +151,12 @@ export async function uploadVideo(videoBase64: string) {
 
     await s3Client.send(putObjectCommand);
 
+    // Get signed url for video
     const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
       expiresIn: 60,
     });
 
+    // Upload video to s3
     await fetch(signedURL, {
       method: "PUT",
       body: buffer,

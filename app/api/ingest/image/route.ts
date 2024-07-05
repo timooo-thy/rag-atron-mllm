@@ -3,7 +3,7 @@ import initialiseVectorStore from "@/utils/db";
 import { Chroma } from "@langchain/community/vectorstores/chroma";
 import { ChatOllama } from "@langchain/community/chat_models/ollama";
 import { HumanMessage } from "@langchain/core/messages";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import sharp from "sharp";
@@ -28,7 +28,6 @@ export async function POST(req: Request) {
       .resize(200)
       .toBuffer();
 
-    // Upload image to s3
     const putObjectCommand = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME!,
       Key: uuid,
@@ -40,10 +39,12 @@ export async function POST(req: Request) {
 
     await s3Client.send(putObjectCommand);
 
+    // Get signed url for image
     const signedURL = await getSignedUrl(s3Client, putObjectCommand, {
       expiresIn: 60,
     });
 
+    // Upload resized image to s3
     await fetch(signedURL, {
       method: "PUT",
       body: resizedFile,
@@ -54,12 +55,13 @@ export async function POST(req: Request) {
 
     // Fetch image from s3 and convert to ArrayBuffer
     const imageUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`;
-    // Describe image using llava:13b model
+
     const llm = new ChatOllama({
       model: "llava:13b",
       temperature: 0.6,
     });
 
+    // Describe image using llava:13b model
     const res = await llm.invoke([
       new HumanMessage({
         content: [
@@ -77,15 +79,7 @@ export async function POST(req: Request) {
 
     const { embeddings } = await initialiseVectorStore();
 
-    // Manual deleting of collection
-    // const client = new ChromaClient({
-    //   path: process.env.CHROMA_DB_URL!,
-    // });
-
-    // await client.deleteCollection({ name: "images" });
-    // console.log(await client.listCollections());
-
-    // Store image description in vector database with url in metadata
+    // Store image description in vector database with image url in metadata
     await Chroma.fromTexts(
       [res.content as string],
       [{ id: uuid, url: imageUrl, caseId: parseInt(caseId) }],
