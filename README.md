@@ -93,7 +93,11 @@ This project uses Bun as the package installer. Follow the steps below to set up
    ngrok http --domain=[***] [port]
    ```
 
-   Alternatively, you can dockerise this instead.
+   Alternatively, you can start the server with Chroma DB with Docker instead (port is set to 3000).
+
+   ```bash
+   docker-compose up --build -d
+   ```
 
 ## Usage
 
