@@ -161,7 +161,7 @@ export default function Chat() {
         <SideNav />
         <div className="flex flex-col m-auto lg:w-[80%] w-full h-dvh">
           <MobileDrawer setInput={setInput} />
-          <main className="grid grid-cols-1 gap-4 overflow-auto p-4 md:grid-cols-3 flex-1">
+          <main className="grid grid-cols-1 gap-4 p-4 md:grid-cols-3 flex-1 overflow-hidden">
             <div className="relative hidden flex-col items-start gap-8 md:flex">
               <form className="grid w-full items-start gap-6">
                 <Settings />
@@ -169,27 +169,31 @@ export default function Chat() {
                 <EmbedFiles />
               </form>
             </div>
-            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-full">
-              <MessageContainer messages={messages} />
-              <form
-                className="pb-5 relative overflow-hidden rounded-lg border focus-within:ring-1 focus-within:ring-ring"
-                onSubmit={handleMessageSubmit}
-              >
-                <TextContainer
-                  input={input}
-                  handleInputChange={handleInputChange}
-                  submitButtonRef={submitButtonRef}
-                />
-                <div className="flex items-center px-3 sticky -bottom-2">
-                  <UploadFilesButton />
-                  <MicrophoneButton />
-                  <SendMessageButton
+            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-full overflow-hidden">
+              <div className="flex-1 overflow-auto">
+                <MessageContainer messages={messages} />
+              </div>
+              <div className="p-1">
+                <form
+                  className="pb-2 relative overflow-hidden rounded-xl border focus-within:ring-1 focus-within:ring-ring"
+                  onSubmit={handleMessageSubmit}
+                >
+                  <TextContainer
                     input={input}
-                    isLoading={isLoading}
+                    handleInputChange={handleInputChange}
                     submitButtonRef={submitButtonRef}
                   />
-                </div>
-              </form>
+                  <div className="flex items-center px-3 sticky -bottom-2">
+                    <UploadFilesButton />
+                    <MicrophoneButton />
+                    <SendMessageButton
+                      input={input}
+                      isLoading={isLoading}
+                      submitButtonRef={submitButtonRef}
+                    />
+                  </div>
+                </form>
+              </div>
             </div>
           </main>
         </div>
