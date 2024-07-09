@@ -1,0 +1,29 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    image: rag-atron:latest
+    container_name: rag-atron
+    volumes:
+      - ./src:/app/src
+      - ./.env:/app/.env
+    restart: always
+    depends_on:
+      - chroma
+
+  chroma:
+    image: chromadb/chroma:latest
+    container_name: rag-atron-chroma
+    restart: always
+    volumes:
+      - chroma-data:/chroma/chroma
+    ports:
+      - 8000:8000
+    environment:
+      - ALLOW_RESET=true
+
+volumes:
+  chroma-data:
