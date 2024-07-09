@@ -251,44 +251,42 @@ export async function POST(req: Request) {
         currentMessageContent,
         llm
       ));
-      if (!vectorStore || !combineDocsChains) {
-        const retrieverChain = HISTORY_PROMPT.pipe(llm);
-        retrieverChain.invoke({
-          chat_history: latestKBufferWindow,
-          query: currentMessageContent,
-        });
-      } else {
-        // Retrieve k similar documents based on the user's query
-        const retriever = vectorStore.asRetriever({
-          k: similarity,
-          filter: { caseId: caseId },
-        });
+    }
+    if (!vectorStore || !combineDocsChains) {
+      const retrieverChain = HISTORY_PROMPT.pipe(llm);
+      retrieverChain.invoke({
+        chat_history: latestKBufferWindow,
+        query: currentMessageContent,
+      });
+    } else {
+      // Retrieve k similar documents based on the user's query
+      const retriever = vectorStore.asRetriever({
+        k: similarity,
+        filter: { caseId: caseId },
+      });
 
-        // Create history aware retriever chain
-        const historyAwareRetrieverChain = await createHistoryAwareRetriever({
-          llm: rephrasingLLM,
-          retriever: retriever,
-          rephrasePrompt: REPHRASE_PROMPT,
-        });
-
-        // Retriever pipeline
-        const retrieverChain = await createRetrievalChain({
-          combineDocsChain: combineDocsChains,
-          retriever: historyAwareRetrieverChain,
-        });
-
-        // Invoke the chain and stream response back
-        retrieverChain.invoke({
-          chat_history: latestKBufferWindow,
-          input:
-            description !== ""
-              ? currentMessageContent +
-                " Description of image to lookup: " +
-                description
-              : currentMessageContent,
-          case_id: caseId,
-        });
-      }
+      // Create history aware retriever chain
+      const historyAwareRetrieverChain = await createHistoryAwareRetriever({
+        llm: rephrasingLLM,
+        retriever: retriever,
+        rephrasePrompt: REPHRASE_PROMPT,
+      });
+      // Retriever pipeline
+      const retrieverChain = await createRetrievalChain({
+        combineDocsChain: combineDocsChains,
+        retriever: historyAwareRetrieverChain,
+      });
+      // Invoke the chain and stream response back
+      retrieverChain.invoke({
+        chat_history: latestKBufferWindow,
+        input:
+          description !== ""
+            ? currentMessageContent +
+              " Description of image to lookup: " +
+              description
+            : currentMessageContent,
+        case_id: caseId,
+      });
     }
   }
 

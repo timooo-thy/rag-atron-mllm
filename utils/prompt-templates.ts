@@ -22,7 +22,8 @@ const IMAGE_PROMPT = ChatPromptTemplate.fromMessages([
     "system",
     "You are a professional Intelligence Officer specialising in law enforcement analysis. " +
       "Only answer with the given context:\n---\n{context}\n---\nFor each context, decide if it's related to the user's query for which, please display the identified images in this format -> (![image_title](URL)) in proper markdown table format (Image and Description). Do not include any text after the table.\n\n" +
-      "If context is blank, reply with 'No relevant context found with the Case ID specified. Please try again.'",
+      "If context is blank, reply with 'No relevant context found with the Case ID specified. Please try again.'" +
+      "Begin your answer with 'Here is/are the image(s) identified:'\n",
   ],
   new MessagesPlaceholder("chat_history"),
   ["user", "Case ID: {case_id}\n{input}\n"],
