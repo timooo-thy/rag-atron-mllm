@@ -159,9 +159,9 @@ export default function Chat() {
     <div className="grid h-dvh w-full pl-[53px]">
       <TooltipProvider>
         <SideNav />
-        <MobileDrawer setInput={setInput} />
-        <div className="flex flex-col m-auto lg:w-[80%] w-full">
-          <main className="grid grid-cols-1 gap-4 overflow-auto p-4 md:grid-cols-3">
+        <div className="flex flex-col m-auto lg:w-[80%] w-full h-dvh">
+          <MobileDrawer setInput={setInput} />
+          <main className="grid grid-cols-1 gap-4 overflow-auto p-4 md:grid-cols-3 flex-1">
             <div className="relative hidden flex-col items-start gap-8 md:flex">
               <form className="grid w-full items-start gap-6">
                 <Settings />
@@ -169,7 +169,7 @@ export default function Chat() {
                 <EmbedFiles />
               </form>
             </div>
-            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-[calc(100dvh-100px)]">
+            <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-full">
               <MessageContainer messages={messages} />
               <form
                 className="pb-5 relative overflow-hidden rounded-lg border focus-within:ring-1 focus-within:ring-ring"

@@ -7,12 +7,14 @@ import { Bot, Copy } from "lucide-react";
 import { Button } from "./ui/button";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { usePlaygroundSettings } from "@/lib/hooks";
 
 type MessageContainerProps = {
   messages: Message[];
 };
 export default function MessageContainer({ messages }: MessageContainerProps) {
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     endOfMessagesRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);

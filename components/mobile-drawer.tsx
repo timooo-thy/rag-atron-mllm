@@ -58,13 +58,13 @@ export default function MobileDrawer({ setInput }: MobileDrawerProps) {
                   <Button
                     onClick={() => {
                       setInput(
-                        "Based on the messages, where was the accused on 22nd March at 10.00am?"
+                        "Based on the messages, where was the accused on 30th April at 12.00pm?"
                       );
                     }}
                     className="bg-primary hover:opacity-80 hover:bg-primary inline-block w-full h-16 text-left whitespace-normal"
                   >
-                    Based on the messages, where was the accused on 22nd March
-                    at 10.00am?
+                    Based on the messages, where was the accused on 30th April
+                    at 12.00pm?
                   </Button>
                 </DrawerClose>
                 <DrawerClose asChild>

@@ -13,7 +13,7 @@ export default function TestPrompts({ setInput }: TestPromptsProps) {
         setInput={setInput}
       />
       <TestPromptButton
-        text="Based on the messages, where was the accused on 22nd March at 10.00am?"
+        text="Based on the messages, where was the accused on 30th April at 12.00pm?"
         setInput={setInput}
       />
       <TestPromptButton
