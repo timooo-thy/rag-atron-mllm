@@ -57,7 +57,7 @@ export async function getRetriever(query: string, llm: ChatOpenAI) {
           page content: {page_content}`,
       }),
     });
-  } else {
+  } else if (response.content === "Case Analysis") {
     vectorStore = await Chroma.fromExistingCollection(embeddings, {
       collectionName: "text",
       url: process.env.CHROMA_DB_URL!,
@@ -73,6 +73,8 @@ export async function getRetriever(query: string, llm: ChatOpenAI) {
           page content: {page_content}`,
       }),
     });
+  } else {
+    return { vectorStore, combineDocsChains };
   }
   return { vectorStore, combineDocsChains };
 }
@@ -118,7 +120,7 @@ export async function uploadImagesAndGenerateUrls(chatFilesBase64: string[]) {
         url: `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uuid}`,
       };
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return { index, url: null };
     }
   });

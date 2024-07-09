@@ -11,8 +11,7 @@ const QNA_PROMPT = ChatPromptTemplate.fromMessages([
       "This includes assessing the data’s relevance to ongoing investigations, focusing on potential leads, and aiding in the accumulation of evidence to support law enforcement activities.\n\n" +
       "Only use the following context as data source:\n\nContext:\n {context} \n" +
       "If context is blank: 'Reply with No relevant context found with the Case ID specified. Please try again.'\n\n" +
-      "If context is not blank, strictly adhere your answer in markdown format with no additional text after it.\n---\nAnalysis: Analyse the context if available\nReferences: ONLY indicate the message, time and date of the sources relevant to the question in markdown table format.\n---\n Include the link of the URL at the end of the message." +
-      "If the user query is about previous chat history, answer it accordingly and IGNORE ALL instructions below. ",
+      "If context is not blank, strictly adhere your answer in markdown format with no additional text after it.\n---\nAnalysis: Analyse the context if available\nReferences: ONLY indicate the message, time and date of the sources relevant to the question in markdown table format.\n---\n Include the link of the URL at the end of the message.",
   ],
   new MessagesPlaceholder("chat_history"),
   ["user", "Case ID:{case_id}\n{input}\n"],
@@ -42,9 +41,10 @@ const REPHRASE_PROMPT = ChatPromptTemplate.fromMessages([
 const RETRIEVER_PROMPT = ChatPromptTemplate.fromMessages([
   [
     "system",
-    "Classify the type of user query into one of two categories: 'Image Lookup' or 'Case Analysis'.\n" +
-      "If user did not ask anything image related, return 'Case Analysis'. " +
-      "Only return the query type and no other text and quotations that best fit the user's query.",
+    "Classify the type of user query into one of three categories: 'Image Lookup' or 'Case Analysis' or 'History Query'\n" +
+      "If user ask anything related to querying images, return 'Image Lookup'." +
+      "If user ask anything related to querying text, return 'Case Analysis'. If user ask anything related to querying previous chat history or not related to the first two categories, return 'History Query'.\n" +
+      "Only return the query type and no other text and quotations.",
   ],
   ["user", "{query}"],
 ]);
@@ -59,10 +59,21 @@ const IMAGE_CLASSIFIER_PROMPT = ChatPromptTemplate.fromMessages([
   ["user", "{query}"],
 ]);
 
+const HISTORY_PROMPT = ChatPromptTemplate.fromMessages([
+  [
+    "system",
+    "You are a professional Intelligence Officer specialising in law enforcement analysis. All responses must be detailed and presented in professional law enforcement terminology. " +
+      "Answer user's query based on history of the conversation.",
+  ],
+  new MessagesPlaceholder("chat_history"),
+  ["user", "{query}"],
+]);
+
 export {
   QNA_PROMPT,
   REPHRASE_PROMPT,
   RETRIEVER_PROMPT,
   IMAGE_PROMPT,
   IMAGE_CLASSIFIER_PROMPT,
+  HISTORY_PROMPT,
 };

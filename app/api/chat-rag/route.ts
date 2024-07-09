@@ -13,6 +13,7 @@ import {
   REPHRASE_PROMPT,
   IMAGE_PROMPT,
   IMAGE_CLASSIFIER_PROMPT,
+  HISTORY_PROMPT,
 } from "@/utils/prompt-templates";
 import { PromptTemplate } from "@langchain/core/prompts";
 import initialiseVectorStore from "@/utils/db";
@@ -152,17 +153,14 @@ export async function POST(req: Request) {
     // Small hack to enable streaming response
     llm.invoke(
       `There is/are ${responses.length} audio clips. Repeat the exact full audio transcriptions in text format and label each clip if more than 1. If transcription is empty, ask user to retry. Transcriptions:` +
-        responses
+        responses +
+        "Begin your answer with 'Here is/are the audio transcription(s):'"
     );
   } else if (
     fileType === "image" &&
     chatFilesBase64 &&
     chatFilesBase64.length > 0
   ) {
-    console.log(
-      `Describe Images with OpenAI, total of ${chatFilesBase64.length} images.`
-    );
-
     const retreiverLLM = new ChatOpenAI({
       model: "gpt-4o",
       temperature: 0,
@@ -253,45 +251,45 @@ export async function POST(req: Request) {
         currentMessageContent,
         llm
       ));
+      if (!vectorStore || !combineDocsChains) {
+        const retrieverChain = HISTORY_PROMPT.pipe(llm);
+        retrieverChain.invoke({
+          chat_history: latestKBufferWindow,
+          query: currentMessageContent,
+        });
+      } else {
+        // Retrieve k similar documents based on the user's query
+        const retriever = vectorStore.asRetriever({
+          k: similarity,
+          filter: { caseId: caseId },
+        });
+
+        // Create history aware retriever chain
+        const historyAwareRetrieverChain = await createHistoryAwareRetriever({
+          llm: rephrasingLLM,
+          retriever: retriever,
+          rephrasePrompt: REPHRASE_PROMPT,
+        });
+
+        // Retriever pipeline
+        const retrieverChain = await createRetrievalChain({
+          combineDocsChain: combineDocsChains,
+          retriever: historyAwareRetrieverChain,
+        });
+
+        // Invoke the chain and stream response back
+        retrieverChain.invoke({
+          chat_history: latestKBufferWindow,
+          input:
+            description !== ""
+              ? currentMessageContent +
+                " Description of image to lookup: " +
+                description
+              : currentMessageContent,
+          case_id: caseId,
+        });
+      }
     }
-
-    // Retrieve k similar documents based on the user's query
-    const retriever = vectorStore.asRetriever({
-      k: similarity,
-      filter: { caseId: caseId },
-    });
-
-    // const retriever = ScoreThresholdRetriever.fromVectorStore(vectorStore, {
-    //   filter: { caseId: caseId },
-    //   minSimilarityScore: 0.4,
-    //   maxK: 20,
-    //   kIncrement: 1,
-    // });
-
-    // Create history aware retriever chain
-    const historyAwareRetrieverChain = await createHistoryAwareRetriever({
-      llm: rephrasingLLM,
-      retriever: retriever,
-      rephrasePrompt: REPHRASE_PROMPT,
-    });
-
-    // Retriever pipeline
-    const retrieverChain = await createRetrievalChain({
-      combineDocsChain: combineDocsChains,
-      retriever: historyAwareRetrieverChain,
-    });
-
-    // Invoke the chain and stream response back
-    retrieverChain.invoke({
-      chat_history: latestKBufferWindow,
-      input:
-        description !== ""
-          ? currentMessageContent +
-            " Description of image to lookup: " +
-            description
-          : currentMessageContent,
-      case_id: caseId,
-    });
   }
 
   return new StreamingTextResponse(stream);
