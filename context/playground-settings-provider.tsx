@@ -2,7 +2,7 @@
 
 import { Model } from "@/lib/type";
 import { Message } from "ai/react/dist";
-import { createContext, useEffect, useState } from "react";
+import { createContext, use, useEffect, useState } from "react";
 
 type PlaygroundSettingsContextType = {
   caseId: string;
@@ -42,15 +42,20 @@ export default function PlaygroundSettingsProvider({
   const [caseEmbedId, setCaseEmbedId] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [chatFiles, setChatFiles] = useState<File[]>([]);
-  const chatHistoryFromLocalStorage: Message[] = JSON.parse(
-    localStorage.getItem("chatHistory") || "[]"
-  );
-  const [chatHistory, setChatHistory] = useState<Message[]>(
-    chatHistoryFromLocalStorage
-  );
+  const [chatHistory, setChatHistory] = useState<Message[]>([]);
 
   useEffect(() => {
-    window.localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    if (typeof window !== "undefined") {
+      setChatHistory(
+        JSON.parse(window.localStorage.getItem("chatHistory") || "[]")
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      window.localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
+    }
   }, [chatHistory]);
 
   return (
