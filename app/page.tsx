@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "ai/react";
+import { Message, useChat } from "ai/react";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { formSchema } from "@/lib/utils";
 import { toast } from "sonner";
@@ -17,6 +17,7 @@ import { usePlaygroundSettings } from "@/lib/hooks";
 import EmbedFiles from "@/components/embed-files";
 import { useRef } from "react";
 import { encode } from "base64-arraybuffer";
+import { uuid } from "short-uuid";
 
 export default function Chat() {
   const {
@@ -27,6 +28,8 @@ export default function Chat() {
     modelName,
     chatFiles,
     setChatFiles,
+    setChatHistory,
+    chatHistory,
   } = usePlaygroundSettings();
   const submitButtonRef = useRef<HTMLButtonElement>(null);
   const {
@@ -38,7 +41,18 @@ export default function Chat() {
     isLoading,
   } = useChat({
     api: "/api/chat-rag",
+    onFinish(message) {
+      addMessages(message);
+    },
+    generateId() {
+      return uuid();
+    },
+    initialMessages: chatHistory,
   });
+
+  const addMessages = (message: Message) => {
+    setChatHistory((prev) => [...prev, message]);
+  };
 
   const handleMessageSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,6 +152,14 @@ export default function Chat() {
       toast.warning(result.error.errors[0].message);
       return;
     }
+
+    const currentMessage: Message = {
+      id: uuid(),
+      role: "user",
+      content: input,
+    };
+
+    addMessages(currentMessage);
 
     handleSubmit(e, {
       options: {
