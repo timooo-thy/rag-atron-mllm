@@ -8,14 +8,21 @@ import { Button } from "./ui/button";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { usePlaygroundSettings } from "@/lib/hooks";
+import BouncingDotsLoader from "./bouncing-dots-loader";
 
 type MessageContainerProps = {
   messages: Message[];
+  isInitialLoading: boolean;
+  isLoading: boolean;
 };
-export default function MessageContainer({ messages }: MessageContainerProps) {
-  const endOfMessagesRef = useRef<HTMLDivElement>(null);
-  const { chatHistory } = usePlaygroundSettings();
 
+export default function MessageContainer({
+  messages,
+  isInitialLoading,
+}: MessageContainerProps) {
+  const endOfMessagesRef = useRef<HTMLDivElement>(null);
+  const loaderRef = useRef<HTMLDivElement>(null);
+  const { chatHistory } = usePlaygroundSettings();
   const newMessages = useMemo(() => {
     return messages.filter((m) => !chatHistory.some((c) => c.id === m.id));
   }, [messages, chatHistory]);
@@ -34,7 +41,7 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
   }
 
   return (
-    <div className="flex flex-col overflow-y-auto md:px-4 md:pt-8 pt-4 px-2 pb-0 h-full w-full">
+    <div className="flex flex-col overflow-y-auto md:px-4 md:pt-8 pt-4 pb-0 px-2 h-full w-full">
       {chatHistory.length > 0 &&
         chatHistory.map((m) => (
           <div key={m.id} className="prose !max-w-full px-4">
@@ -91,7 +98,7 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
             )}
             <Markdown
               remarkPlugins={[remarkGfm]}
-              className="mb-10 [&>table]:text-center [&>table>tbody>tr>td>img]:m-auto [&>table>tbody>tr>td]:align-middle [&>table>tbody>tr>td]:m-auto rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
+              className="mb-10 [&>h3]:my-3 [&>h2]:my-3 [&>h1]:my-3 [&>table]:text-center [&>table>tbody>tr>td>img]:m-auto [&>table>tbody>tr>td]:align-middle [&>table>tbody>tr>td]:m-auto rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
             >
               {m.content}
             </Markdown>
@@ -126,7 +133,7 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
 
                 <Markdown
                   remarkPlugins={[remarkGfm]}
-                  className="mb-10 [&>table]:text-center [&>table>tbody>tr>td>img]:m-auto [&>table>tbody>tr>td]:align-middle [&>table>tbody>tr>td]:m-auto rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
+                  className="mb-10 [&>h3]:my-3 [&>h2]:my-3 [&>h1]:my-3 [&>table]:text-center [&>table>tbody>tr>td>img]:m-auto [&>table>tbody>tr>td]:align-middle [&>table>tbody>tr>td]:m-auto rounded-medium text-medium bg-background md:px-8 px-5 py-1 mt-2 shadow-md dark:shadow-lg dark:bg-slate-800"
                 >
                   {m.content}
                 </Markdown>
@@ -134,6 +141,14 @@ export default function MessageContainer({ messages }: MessageContainerProps) {
             )}
           </div>
         ))}
+      {isInitialLoading && (
+        <div
+          className="flex justify-start pl-5 pb-2 items-center"
+          ref={loaderRef}
+        >
+          <BouncingDotsLoader />
+        </div>
+      )}
       <div ref={endOfMessagesRef} />
     </div>
   );

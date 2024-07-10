@@ -15,7 +15,7 @@ import SendMessageButton from "@/components/send-message-button";
 import TextContainer from "@/components/text-container";
 import { usePlaygroundSettings } from "@/lib/hooks";
 import EmbedFiles from "@/components/embed-files";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { encode } from "base64-arraybuffer";
 import { uuid } from "short-uuid";
 
@@ -32,8 +32,10 @@ export default function Chat() {
     chatHistory,
   } = usePlaygroundSettings();
   const submitButtonRef = useRef<HTMLButtonElement>(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
   const {
     messages,
+    setMessages,
     input,
     handleInputChange,
     handleSubmit,
@@ -48,6 +50,9 @@ export default function Chat() {
       return uuid();
     },
     initialMessages: chatHistory,
+    onResponse() {
+      setIsInitialLoading(false);
+    },
   });
 
   const addMessages = (message: Message) => {
@@ -161,6 +166,8 @@ export default function Chat() {
 
     addMessages(currentMessage);
 
+    setIsInitialLoading(true);
+
     handleSubmit(e, {
       options: {
         body: {
@@ -180,7 +187,7 @@ export default function Chat() {
   return (
     <div className="grid h-dvh w-full pl-[53px]">
       <TooltipProvider>
-        <SideNav />
+        <SideNav setMessages={setMessages} />
         <div className="flex flex-col m-auto lg:w-[80%] w-full h-dvh">
           <MobileDrawer setInput={setInput} />
           <main className="grid grid-cols-1 gap-4 p-4 md:grid-cols-3 flex-1 overflow-hidden">
@@ -193,7 +200,11 @@ export default function Chat() {
             </div>
             <div className="relative flex flex-col rounded-xl bg-muted/50 border-2 col-span-2 h-full overflow-hidden">
               <div className="flex-1 overflow-auto">
-                <MessageContainer messages={messages} />
+                <MessageContainer
+                  messages={messages}
+                  isInitialLoading={isInitialLoading}
+                  isLoading={isLoading}
+                />
               </div>
               <div className="p-1">
                 <form

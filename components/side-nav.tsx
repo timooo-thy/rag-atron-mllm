@@ -21,11 +21,13 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { usePlaygroundSettings } from "@/lib/hooks";
-import { useChat } from "ai/react";
+import { Message } from "ai";
 
-export default function SideNav() {
+type SideNavProps = {
+  setMessages: (messages: Message[]) => void;
+};
+export default function SideNav({ setMessages }: SideNavProps) {
   const { setChatHistory } = usePlaygroundSettings();
-  const { setMessages } = useChat();
   return (
     <aside className="inset-y fixed left-0 z-20 flex h-full flex-col border-r">
       <div className="border-b p-2">
@@ -150,6 +152,7 @@ export default function SideNav() {
                   onClick={() => {
                     setChatHistory([]);
                     setMessages([]);
+                    localStorage.removeItem("chatHistory");
                   }}
                 >
                   Delete
