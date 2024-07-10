@@ -29,8 +29,14 @@ export default function SideNav() {
   return (
     <aside className="inset-y fixed left-0 z-20 flex h-full flex-col border-r">
       <div className="border-b p-2">
-        <Button variant="outline" size="icon" aria-label="Home">
-          <Image src="/rag-atron-logo.webp" width={32} height={32} alt="Logo" />
+        <Button variant="ghost" size="icon" aria-label="Home">
+          <Image
+            src="/rag-atron-logo.webp"
+            width={32}
+            height={32}
+            alt="Logo"
+            className="rounded-2xl"
+          />
         </Button>
       </div>
       <nav className="grid gap-1 p-2">
